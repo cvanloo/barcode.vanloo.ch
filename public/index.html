@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Barcode</title>
+</head>
+
+<body>
+
+    <div class="flex-container">
+        <div id="form-input" class="panel">
+            <h1>Barcode</h1>
+
+            <select id="code-select" name="codes" class="form-row" aria-label="Barcode">
+                <option value="code-128">Code-128</option>
+            </select>
+
+            <textarea name="code-data" rows="10" class="form-row" style="resize: vertical;">
+            </textarea>
+
+            <button type="button" class="form-row">
+                Generate
+            </button>
+
+            <button type="button" class="form-row">
+                Clear
+            </button>
+        </div>
+
+        <div id="scratch-pad" class="panel">
+        </div>
+    </div>
+
+</body>
+
+</html>

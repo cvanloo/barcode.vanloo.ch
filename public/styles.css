@@ -1,0 +1,124 @@
+@charset "UTF-8";
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    src: url("fonts/WOFF2/Atkinson-Hyperlegible-Regular-102a.woff2") format("woff2"),
+        url("fonts/WOFF/Atkinson-Hyperlegible-Regular-102.woff") format("woff"),
+        url("fonts/SVG/Atkinson-Hyperlegible-Regular-102.svg") format("svg");
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    src: url("fonts/WOFF2/Atkinson-Hyperlegible-Italic-102a.woff2") format("woff2"),
+        url("fonts/WOFF/Atkinson-Hyperlegible-Italic-102.woff") format("woff"),
+        url("fonts/SVG/Atkinson-Hyperlegible-Italic-102.svg") format("svg");
+    font-display: swap;
+    font-style: italic, oblique;
+}
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    src: url("fonts/WOFF2/Atkinson-Hyperlegible-Bold-102a.woff2") format("woff2"),
+        url("fonts/WOFF/Atkinson-Hyperlegible-Bold-102.woff") format("woff"),
+        url("fonts/SVG/Atkinson-Hyperlegible-Bold-102.svg") format("svg");
+    font-display: swap;
+    font-weight: bold;
+}
+
+@font-face {
+    font-family: "Atkinson Hyperlegible";
+    src: url("fonts/WOFF2/Atkinson-Hyperlegible-BoldItalic-102a.woff2") format("woff2"),
+        url("fonts/WOFF/Atkinson-Hyperlegible-BoldItalic-102.woff") format("woff"),
+        url("fonts/SVG/Atkinson-Hyperlegible-BoldItalic-102.svg") format("svg");
+    font-display: swap;
+    font-weight: bold;
+    font-style: italic, oblique;
+}
+
+:root {
+    --font: "Atkinson Hyperlegible";
+
+    --fg-color: #222;
+    --bg-color: #E8E6E3;
+    --bg-image: url("");
+
+    --panel-bg-color: #4C4844;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --fg-color: #EBDBB2;
+        --bg-color: black;
+        --bg-image: url("");
+
+        --panel-bg-color: #4C4844;
+    }
+}
+
+html,
+body {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    color: var(--fg-color);
+    background-color: var(--bg-color);
+    background-image: var(--bg-image);
+    font: var(--font);
+}
+
+button {
+    padding: 1em;
+}
+
+.flex-container {
+    max-width: 120rem;
+    margin: 0 auto;
+
+    display: flex;
+    flex-direction: row;
+
+    padding: 1em 1em;
+}
+
+.panel {
+    height: 100%;
+    height: -moz-available;
+    height: -webkit-fill-available;
+    height: stretch;
+
+    border-radius: 15px;
+
+    background: var(--panel-bg-color);
+
+    padding: 2em 2em;
+    margin: 1em 1em;
+}
+
+#form-input {
+    flex: 1;
+}
+
+#scratch-pad {
+    flex: 2;
+}
+
+.form-row {
+    display: inline-block;
+
+    width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+    width: stretch;
+
+    margin: 1em 0;
+}
+
+/* TODO: Create custom select */
+#code-select,
+#code-select * {
+    height: 4em;
+    padding: 1em;
+}
