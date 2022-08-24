@@ -14,26 +14,48 @@
         <div id="form-input" class="panel">
             <h1>Barcode</h1>
 
-            <select id="code-select" name="codes" class="form-row" aria-label="Barcode">
-                <option value="code-128">Code-128</option>
-            </select>
+            <form id="form-create" method="post">
+                <select id="code-select" name="code" class="form-row" aria-label="Barcode">
+                </select>
 
-            <textarea name="code-data" rows="10" class="form-row" style="resize: vertical;">
-            </textarea>
+                <textarea name="data" rows="10" class="form-row" style="resize: vertical;" placeholder="Enter barcode text..."></textarea>
 
-            <button type="button" class="form-row">
-                Generate
-            </button>
+                <button type="submit" id="btn-generate" class="form-row">
+                    Generate
+                </button>
 
-            <button type="button" class="form-row">
-                Clear
-            </button>
+                <button type="reset" id="btn-clear" class="form-row">
+                    Clear
+                </button>
+            </form>
         </div>
 
-        <div id="scratch-pad" class="panel">
-        </div>
+        <div id="scratch-pad" class="panel"></div>
     </div>
 
+    <script src="barcode.js"></script>
+    <script src="api.js"></script>
+    <script>
+        const form_create = document.getElementById('form-create')
+        form_create.addEventListener("reset", function(e) {
+            e.preventDefault()
+            e.target.data.value = ''
+        })
+        form_create.addEventListener("submit", function(e) {
+            const { bi, bt } = requestBarcodeOfType(e.target.code.value, e.target.data.value)
+            generateBarcode(e, bi, bt)
+        })
+    </script>
+    <script>
+        const select = document.getElementById('code-select')
+        const types = requestBarcodeTypes()
+        types.forEach((t) => {
+            const opt = document.createElement('option')
+            opt.value = t.value
+            opt.innerHTML = t.name
+            select.appendChild(opt)
+        })
+    </script>
 </body>
 
 </html>

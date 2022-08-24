@@ -44,6 +44,8 @@
     --bg-image: url("");
 
     --panel-bg-color: #4C4844;
+
+    --barcode-border-color: black;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -53,6 +55,8 @@
         --bg-image: url("");
 
         --panel-bg-color: #4C4844;
+
+        --barcode-border-color: black;
     }
 }
 
@@ -81,6 +85,8 @@ button {
     flex-direction: row;
 
     padding: 1em 1em;
+
+    overflow: hidden;
 }
 
 .panel {
@@ -99,10 +105,18 @@ button {
 
 #form-input {
     flex: 1;
+
+    height: 85vh;
 }
 
 #scratch-pad {
-    flex: 2;
+    flex: 3;
+
+    display: flex;
+    flex-flow: wrap;
+
+    height: 85vh;
+    overflow: scroll;
 }
 
 .form-row {
@@ -121,4 +135,40 @@ button {
 #code-select * {
     height: 4em;
     padding: 1em;
+}
+
+/* Barcode Style */
+.barcode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: fit-content;
+    height: fit-content;
+    border: 2px solid var(--barcode-border-color);
+    border-radius: 15px;
+    padding: 1em;
+    margin: 1em;
+}
+
+.barcode #top-bar {
+    width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+    width: stretch;
+}
+
+.barcode #top-bar button:nth-child(1) {
+    float: left;
+}
+
+.barcode #top-bar button:nth-child(2) {
+    float: right;
+}
+
+.barcode img {
+    padding: 0.5em 0;
+}
+
+.barcode p {
+    margin: 0;
 }
