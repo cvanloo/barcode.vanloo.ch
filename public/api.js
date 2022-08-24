@@ -1,17 +1,28 @@
-function requestBarcodeTypes() {
-    // TODO: Make API request
-    return [{
-        value: "code-128",
-        name: "Code-128"
-    }, {
-        value: "gs1-128",
-        name: "GS1-128"
-    }]
+async function requestBarcodeTypes() {
+    const res = await fetch("http://localhost:8080/supported_types", {
+        method: 'GET'
+    })
+    if (res.ok) {
+        const p = await res.json()
+        return p
+    }
+    return []
 }
 
-function requestBarcodeOfType(type, text) {
-    // TODO: Make API request
-    const img = new Image(312, 100)
-    img.src = "barcode.png"
-    return {bi: img, bt: text}
+async function requestBarcodeOfType(type, text) {
+    const url = new URL("http://localhost:8080/create_barcode")
+    url.searchParams.set('type', type)
+    url.searchParams.set('text', text)
+
+    const res = await fetch(url.href, {
+        method: 'GET'
+    })
+
+    if (res.ok) {
+        const blob = await res.blob()
+        const imgURL = URL.createObjectURL(blob)
+        return imgURL
+    }
+
+    return null // throw an exception?
 }

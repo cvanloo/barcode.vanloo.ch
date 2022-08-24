@@ -42,18 +42,22 @@
             e.target.data.value = ''
         })
         form_create.addEventListener("submit", function(e) {
-            const { bi, bt } = requestBarcodeOfType(e.target.code.value, e.target.data.value)
-            generateBarcode(e, bi, bt)
+            e.preventDefault()
+
+            requestBarcodeOfType(e.target.code.value, e.target.data.value).then(imgURL => {
+                generateBarcode(e, imgURL, e.target.data.value)
+            })
         })
     </script>
     <script>
         const select = document.getElementById('code-select')
-        const types = requestBarcodeTypes()
-        types.forEach((t) => {
-            const opt = document.createElement('option')
-            opt.value = t.value
-            opt.innerHTML = t.name
-            select.appendChild(opt)
+        requestBarcodeTypes().then(types => {
+            types.forEach((t) => {
+                const opt = document.createElement('option')
+                opt.value = t.Value
+                opt.innerHTML = t.Name
+                select.appendChild(opt)
+            })
         })
     </script>
 </body>

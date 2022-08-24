@@ -2,7 +2,7 @@ const btn_generate = document.getElementById('btn-generate')
 const scratch_pad = document.getElementById('scratch-pad')
 let idx = 0;
 
-function generateBarcode(e, bc_img, bc_text) {
+function generateBarcode(e, bc_img_url, bc_text) {
     e.preventDefault()
 
     const div = document.createElement('div')
@@ -26,7 +26,9 @@ function generateBarcode(e, bc_img, bc_text) {
     top_bar.appendChild(btn_close)
     div.appendChild(top_bar)
 
-    div.appendChild(bc_img)
+    const img = new Image(312, 100)
+    img.src = bc_img_url
+    div.appendChild(img)
 
     const p = document.createElement('p')
     p.innerHTML = bc_text
