@@ -5,8 +5,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"image/png"
 	"net/http"
-	"os"
+
+	"github.com/boombuler/barcode"
+	"github.com/boombuler/barcode/code128"
 )
 
 func main() {
@@ -24,10 +27,10 @@ func main() {
 		}{{
 			Value: "code-128",
 			Name:  "Code-128",
-		}, {
+		}, /*{
 			Value: "gs1-128",
 			Name:  "GS1-128",
-		}}
+		}*/}
 
 		bs, err := json.Marshal(supported)
 		if err != nil {
@@ -44,16 +47,23 @@ func main() {
 		r.ParseForm()
 		bc := r.Form.Get("type")
 		text := r.Form.Get("text")
-		fmt.Printf("type: %s, text: %s", bc, text)
+		fmt.Printf("type: %s, text: %s\n", bc, text)
 
-		b, err := os.ReadFile("barcode.png")
+		b, err := code128.Encode(text)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		bs, err := barcode.Scale(b, 312, 80)
+
+		err = png.Encode(w, bs)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "image/png")
-		w.Write(b)
 	})
 
 	fmt.Println("Listening and serving on :8080")

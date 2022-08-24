@@ -26,7 +26,7 @@ function generateBarcode(e, bc_img_url, bc_text) {
     top_bar.appendChild(btn_close)
     div.appendChild(top_bar)
 
-    const img = new Image(312, 100)
+    const img = new Image(312, 80)
     img.src = bc_img_url
     div.appendChild(img)
 
