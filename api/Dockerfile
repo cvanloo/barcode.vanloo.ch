@@ -3,9 +3,9 @@
 FROM golang:1.19.0-alpine AS webapi
 ENV GO111MODULE=on
 WORKDIR /usr/src/barcode
-COPY api/go.mod api/go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download && go mod verify
-COPY api .
+COPY . .
 RUN go build -v -o /usr/local/bin/barcode ./...
 EXPOSE 8080
 CMD ["barcode"]
