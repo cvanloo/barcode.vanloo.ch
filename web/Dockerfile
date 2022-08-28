@@ -3,4 +3,3 @@
 FROM caddy:2.5.2-alpine AS webapp
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY public /srv
-EXPOSE 8000

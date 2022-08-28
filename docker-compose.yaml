@@ -4,7 +4,15 @@ services:
     build: ./web
     ports:
       - "8000:8000"
+    networks:
+      - barcode-net
   api:
     build: ./api
     ports:
       - "8080:8080"
+    networks:
+      - barcode-net
+
+networks:
+  barcode-net:
+    driver: bridge
