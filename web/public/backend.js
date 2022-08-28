@@ -1,5 +1,5 @@
 async function requestBarcodeTypes() {
-    const res = await fetch("http://localhost:8080/supported_types", {
+    const res = await fetch("http://barcode.vanloo.ch/api/supported_types", {
         method: 'GET'
     })
     if (res.ok) {
@@ -10,7 +10,7 @@ async function requestBarcodeTypes() {
 }
 
 async function requestBarcodeOfType(type, text) {
-    const url = new URL("http://localhost:8080/create_barcode")
+    const url = new URL("http://barcode.vanloo.ch/api/create_barcode")
     url.searchParams.set('type', type)
     url.searchParams.set('text', text)
 

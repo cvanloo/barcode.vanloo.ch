@@ -19,7 +19,7 @@ func main() {
 		(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	}
 
-	mux.HandleFunc("/supported_types", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/supported_types", func(w http.ResponseWriter, r *http.Request) {
 		enableCORS(&w)
 
 		supported := []struct {
@@ -41,7 +41,7 @@ func main() {
 		w.Write(bs)
 	})
 
-	mux.HandleFunc("/create_barcode", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/create_barcode", func(w http.ResponseWriter, r *http.Request) {
 		enableCORS(&w)
 
 		r.ParseForm()
