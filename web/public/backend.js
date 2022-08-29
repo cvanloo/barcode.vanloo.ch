@@ -10,7 +10,7 @@ async function requestBarcodeTypes() {
 }
 
 async function requestBarcodeOfType(type, text) {
-    const url = new URL("/api/create_barcode")
+    const url = new URL(`${window.location}api/create_barcode`)
     url.searchParams.set('type', type)
     url.searchParams.set('text', text)
 
