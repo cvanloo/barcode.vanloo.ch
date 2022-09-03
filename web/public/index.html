@@ -32,16 +32,16 @@
                 </button>
             </form>
 
-            <button>Load Previous Session</button>
+            <hr />
             <select id="session-select" name="session" aria-label="Session">
                 <option value="" disabled selected hidden>Select a Session</option>
+                <option value="create_new">Create New</option>
             </select>
         </div>
 
         <div id="scratch-pad" class="panel"></div>
     </div>
 
-    <script src="session.js"></script>
     <script src="storage.js"></script>
     <script src="barcode.js"></script>
     <script src="backend.js"></script>
@@ -62,15 +62,24 @@
             }
 
             requestBarcodeOfType(b.code, b.data).then(imgURL => {
-                b.image = imgURL // TODO: I don't think this URI will still be valid.
-                generateBarcode(b.image, b.data, b.name)
-                saveBarcode(b)
-                e.target.reset()
+                fetch(imgURL)
+                    .then(r => r.blob())
+                    .then(blob => {
+                        const fr = new FileReader()
+                        fr.addEventListener("load", function() {
+                            b.image = fr.result
+                            generateBarcode(imgURL, b.data, b.name)
+                            saveBarcode(b)
+                            e.target.reset()
+                        }, false)
+                        fr.readAsDataURL(blob)
+                    })
             })
         })
 
         const select = document.getElementById('code-select')
         requestBarcodeTypes().then(types => {
+            select.removeChild(select.children[0])
             types.forEach((t) => {
                 const opt = document.createElement('option')
                 opt.value = t.Value
@@ -80,11 +89,13 @@
         })
 
         const session_select = document.getElementById('session-select')
-        Object.keys(localStorage).forEach((key) => {
-            const opt = document.createElement('option')
-            opt.value = key
-            opt.innerHTML = key
-            session_select.appendChild(opt)
+        sessionSelect(session_select)
+        session_select.addEventListener("change", function(e) {
+            if ("create_new" === session_select.value) {
+                createSession()
+            } else {
+                loadSession(session_select.value)
+            }
         })
     </script>
 </body>

@@ -53,3 +53,24 @@ function saveBarcode(code) {
     bcs[bcs.length] = code
     localStorage.setObject(session, bcs)
 }
+
+function createSession() {
+    scratch_pad.textContent = ''
+    return sessionStorage.newSession()
+}
+
+function loadSession(session) {
+    scratch_pad.textContent = ''
+    localStorage.getObject(session).forEach((bc) => {
+        generateBarcode(bc.image, bc.data, bc.name)
+    })
+}
+
+function sessionSelect(select) {
+    Object.keys(localStorage).forEach((key) => {
+        const opt = document.createElement('option')
+        opt.value = key
+        opt.innerHTML = key
+        session_select.appendChild(opt)
+    })
+}

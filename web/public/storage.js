@@ -16,8 +16,14 @@ function uuidv4() {
 Storage.prototype.getSession = function() {
     let u = this.getItem('uuid')
     if (null === u) {
-        this.setItem('uuid', uuidv4())
-        u = this.getItem('uuid')
+        u = uuidv4()
+        this.setItem('uuid', u)
     }
+    return u
+}
+
+Storage.prototype.newSession = function() {
+    let u = uuidv4()
+    this.setItem('uuid', u)
     return u
 }

@@ -130,6 +130,15 @@ button {
     margin: 1em 0;
 }
 
+#session-select {
+    padding: 1em;
+
+    width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+    width: stretch;
+}
+
 /* TODO: Create custom select */
 #code-select,
 #code-select * {
