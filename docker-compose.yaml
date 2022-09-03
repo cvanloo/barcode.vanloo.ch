@@ -1,12 +1,14 @@
 version: '3'
 services:
   web:
+    restart: unless-stopped
     build: ./web
     ports:
       - "8000:8000"
     networks:
       - barcode-net
   api:
+    restart: unless-stopped
     build: ./api
     ports:
       - "8080:8080"
