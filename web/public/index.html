@@ -15,10 +15,13 @@
             <h1>Barcode</h1>
 
             <form id="form-create" method="post">
-                <select id="code-select" name="code" class="form-row" aria-label="Barcode">
+                <select id="code-select" name="code" class="form-row" aria-label="Barcode Type" required>
+                    <option value="" disabled selected hidden>*Select a Barcode Type</option>
                 </select>
 
-                <textarea name="data" rows="10" class="form-row" style="resize: vertical;" placeholder="Enter barcode text..."></textarea>
+                <textarea name="data" rows="10" class="form-row" style="resize: vertical;" placeholder="*Enter barcode text..." required></textarea>
+
+                <input id="name-field" type="text" name="name" class="form-row" aria-label="Name/Description" placeholder="Name/Description" />
 
                 <button type="submit" id="btn-generate" class="form-row">
                     Generate
@@ -28,11 +31,18 @@
                     Clear
                 </button>
             </form>
+
+            <button>Load Previous Session</button>
+            <select id="session-select" name="session" aria-label="Session">
+                <option value="" disabled selected hidden>Select a Session</option>
+            </select>
         </div>
 
         <div id="scratch-pad" class="panel"></div>
     </div>
 
+    <script src="session.js"></script>
+    <script src="storage.js"></script>
     <script src="barcode.js"></script>
     <script src="backend.js"></script>
     <script>
@@ -40,16 +50,25 @@
         form_create.addEventListener("reset", function(e) {
             e.preventDefault()
             e.target.data.value = ''
+            e.target.name.value = ''
         })
         form_create.addEventListener("submit", function(e) {
             e.preventDefault()
 
-            requestBarcodeOfType(e.target.code.value, e.target.data.value).then(imgURL => {
-                generateBarcode(e, imgURL, e.target.data.value)
+            const b = {
+                'code': e.target.code.value,
+                'data': e.target.data.value,
+                'name': e.target.name.value
+            }
+
+            requestBarcodeOfType(b.code, b.data).then(imgURL => {
+                b.image = imgURL // TODO: I don't think this URI will still be valid.
+                generateBarcode(b.image, b.data, b.name)
+                saveBarcode(b)
+                e.target.reset()
             })
         })
-    </script>
-    <script>
+
         const select = document.getElementById('code-select')
         requestBarcodeTypes().then(types => {
             types.forEach((t) => {
@@ -58,6 +77,14 @@
                 opt.innerHTML = t.Name
                 select.appendChild(opt)
             })
+        })
+
+        const session_select = document.getElementById('session-select')
+        Object.keys(localStorage).forEach((key) => {
+            const opt = document.createElement('option')
+            opt.value = key
+            opt.innerHTML = key
+            session_select.appendChild(opt)
         })
     </script>
 </body>

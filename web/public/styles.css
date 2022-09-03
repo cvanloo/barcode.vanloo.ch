@@ -137,6 +137,10 @@ button {
     padding: 1em;
 }
 
+#name-field {
+    padding: 1em;
+}
+
 /* Barcode Style */
 .barcode {
     display: flex;
@@ -157,12 +161,18 @@ button {
     width: stretch;
 }
 
-.barcode #top-bar button:nth-child(1) {
-    float: left;
+.barcode #top-bar {
+    display: flex;
+    flex-direction: row;
 }
 
-.barcode #top-bar button:nth-child(2) {
-    float: right;
+.barcode #top-bar button {
+    flex: 1;
+}
+
+.barcode #top-bar p {
+    text-align: center;
+    flex: 4;
 }
 
 .barcode img {
