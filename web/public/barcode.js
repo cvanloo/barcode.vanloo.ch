@@ -48,7 +48,7 @@ function removeBarcode(idx) {
 }
 
 function saveBarcode(code) {
-    const session = `barcodes-${sessionStorage.getSession()}`
+    const session = sessionStorage.getSession()
     const bcs = localStorage.getObject(session) ?? []
     bcs[bcs.length] = code
     localStorage.setObject(session, bcs)
@@ -61,7 +61,7 @@ function createSession() {
 
 function loadSession(session) {
     scratch_pad.textContent = ''
-    localStorage.getObject(session).forEach((bc) => {
+    localStorage.getObject(session)?.forEach((bc) => {
         generateBarcode(bc.image, bc.data, bc.name)
     })
 }
