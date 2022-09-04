@@ -17,7 +17,7 @@ import (
 	c "framagit.org/miya/barcode.vanloo.ch/api/code128"
 )
 
-func main() {
+func main2() {
 	f, err := os.Open("test_code128.png")
 	if err != nil {
 		log.Fatalf("opening test file: %v", err)
@@ -29,7 +29,7 @@ func main() {
 	fmt.Println(c.Decode(img))
 }
 
-func main2() {
+func main() {
 	mux := http.NewServeMux()
 
 	enableCORS := func(w *http.ResponseWriter) {
