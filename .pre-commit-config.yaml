@@ -1,0 +1,5 @@
+repos:
+  - repo: https://framagit.org/miya/pre-commit-hooks.git
+    rev: v1.0.0
+    hooks:
+      - id: nocheckin
