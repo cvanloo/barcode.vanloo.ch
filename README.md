@@ -1,5 +1,19 @@
 # Online Barcode Generator
 
+## Pre Commit
+
+```sh
+pre-commit install
+```
+
+NOTE: Changes to `.pre-commit-config.yaml` require `--no-verify` to be
+commited:
+
+```sh
+git add .pre-commit-config.yaml
+git commit --no-verify
+```
+
 ## Setup
 
 ```sh
