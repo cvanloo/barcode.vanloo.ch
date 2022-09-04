@@ -5,12 +5,29 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"image"
 	"image/png"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/code128"
+
+	c "framagit.org/miya/barcode.vanloo.ch/api/code128"
 )
+
+func main2() {
+	f, err := os.Open("test_code128.png")
+	if err != nil {
+		log.Fatalf("opening test file: %v", err)
+	}
+	img, _, err := image.Decode(f)
+	if err != nil {
+		log.Fatalf("decoding image: %v", err)
+	}
+	fmt.Println(c.Decode(img))
+}
 
 func main() {
 	mux := http.NewServeMux()

@@ -2,9 +2,7 @@ const btn_generate = document.getElementById('btn-generate')
 const scratch_pad = document.getElementById('scratch-pad')
 let idx = 0;
 
-function generateBarcode(e, bc_img_url, bc_text) {
-    e.preventDefault()
-
+function generateBarcode(bc_img_url, bc_text, bc_name) {
     const div = document.createElement('div')
     div.classList.add('barcode')
     div.id = `bc-${idx}`
@@ -19,10 +17,14 @@ function generateBarcode(e, bc_img_url, bc_text) {
     btn_move.innerHTML = "Move"
     btn_close.innerHTML = "Close"
 
+    const name_tag = document.createElement('p')
+    name_tag.innerHTML = bc_name
+
     const cidx = idx
     btn_close.onclick = () => removeBarcode(cidx)
 
     top_bar.appendChild(btn_move)
+    top_bar.appendChild(name_tag)
     top_bar.appendChild(btn_close)
     div.appendChild(top_bar)
 
@@ -38,11 +40,37 @@ function generateBarcode(e, bc_img_url, bc_text) {
     scratch_pad.appendChild(div)
 
     idx++
-
-    e.target.reset()
 }
 
 function removeBarcode(idx) {
     const d = document.getElementById(`bc-${idx}`)
     scratch_pad.removeChild(d)
+}
+
+function saveBarcode(code) {
+    const session = sessionStorage.getSession()
+    const bcs = localStorage.getObject(session) ?? []
+    bcs[bcs.length] = code
+    localStorage.setObject(session, bcs)
+}
+
+function createSession() {
+    scratch_pad.textContent = ''
+    return sessionStorage.newSession()
+}
+
+function loadSession(session) {
+    scratch_pad.textContent = ''
+    localStorage.getObject(session)?.forEach((bc) => {
+        generateBarcode(bc.image, bc.data, bc.name)
+    })
+}
+
+function sessionSelect(select) {
+    Object.keys(localStorage).forEach((key) => {
+        const opt = document.createElement('option')
+        opt.value = key
+        opt.innerHTML = key
+        session_select.appendChild(opt)
+    })
 }
