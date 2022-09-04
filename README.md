@@ -7,7 +7,7 @@ pre-commit install
 ```
 
 NOTE: Changes to `.pre-commit-config.yaml` require `--no-verify` to be
-commited:
+committed:
 
 ```sh
 git add .pre-commit-config.yaml
