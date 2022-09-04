@@ -6,6 +6,7 @@
         url("fonts/WOFF/Atkinson-Hyperlegible-Regular-102.woff") format("woff"),
         url("fonts/SVG/Atkinson-Hyperlegible-Regular-102.svg") format("svg");
     font-display: swap;
+    font-style: normal;
 }
 
 @font-face {
@@ -39,22 +40,32 @@
 :root {
     --font: "Atkinson Hyperlegible";
 
-    --fg-color: #222;
-    --bg-color: #E8E6E3;
+    --fg-color: #1C1D23;
+    --bg-color: #B3DFF9;
     --bg-image: url("");
 
-    --panel-bg-color: #4C4844;
+    --panel-bg-color: #D1EBFC;
+    --bc-bg-color: #F7F7F7;
+    --bc-fg-color: #1C1D23;
+    --bc-button-bg-color: #FFF;
+    --form-bg-color: #FFF;
+    --form-border-color: #E5E5E5;
 
     --barcode-border-color: black;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --fg-color: #EBDBB2;
+        --fg-color: #FCF9FB;
         --bg-color: black;
         --bg-image: url("");
 
-        --panel-bg-color: #4C4844;
+        --panel-bg-color: #282627;
+        --bc-bg-color: #FAF2FC;
+        --bc-fg-color: black;
+        --bc-button-bg-color: #FFF;
+        --form-bg-color: #FAF2FC;
+        --form-border-color: #E5E5E5;
 
         --barcode-border-color: black;
     }
@@ -71,10 +82,19 @@ body {
     background-color: var(--bg-color);
     background-image: var(--bg-image);
     font: var(--font);
+    font-style: normal;
 }
 
-button {
+button,
+select,
+textarea,
+input[type="text"] {
     padding: 1em;
+    background: var(--form-bg-color);
+    border: 1px solid;
+    border-radius: 5px;
+    border-color: var(--form-border-color);
+    font-style: normal;
 }
 
 .flex-container {
@@ -161,6 +181,7 @@ button {
     border-radius: 15px;
     padding: 1em;
     margin: 1em;
+    background: var(--bc-bg-color);
 }
 
 .barcode #top-bar {
@@ -176,6 +197,7 @@ button {
 }
 
 .barcode #top-bar button {
+    background: var(--bc-button-bg-color);
     flex: 1;
 }
 
@@ -189,5 +211,8 @@ button {
 }
 
 .barcode p {
+    color: var(--bc-fg-color);
     margin: 0;
+    height: 40px;
+    line-height: 40px
 }
