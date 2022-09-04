@@ -27,3 +27,7 @@ Storage.prototype.newSession = function() {
     this.setItem('uuid', u)
     return u
 }
+
+Storage.prototype.setSession = function(session) {
+    this.setItem('uuid', session)
+}
