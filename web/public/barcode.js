@@ -62,6 +62,7 @@ function createSession() {
 
 function loadSession(session) {
     scratch_pad.textContent = ''
+    sessionStorage.setSession(session)
     localStorage.getObject(session)?.forEach((bc) => {
         generateBarcode(bc.image, bc.data, bc.name)
     })
