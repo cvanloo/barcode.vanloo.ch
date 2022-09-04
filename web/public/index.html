@@ -35,7 +35,6 @@
             <hr />
             <select id="session-select" name="session" aria-label="Session">
                 <option value="" disabled selected hidden>Select a Session</option>
-                <option value="create_new">Create New</option>
             </select>
         </div>
 
@@ -93,6 +92,7 @@
         session_select.addEventListener("change", function(e) {
             if ("create_new" === session_select.value) {
                 createSession()
+                sessionSelect(session_select)
             } else {
                 loadSession(session_select.value)
             }

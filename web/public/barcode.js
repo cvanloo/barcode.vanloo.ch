@@ -56,7 +56,8 @@ function saveBarcode(code) {
 
 function createSession() {
     scratch_pad.textContent = ''
-    return sessionStorage.newSession()
+    const session = sessionStorage.newSession()
+    localStorage.setObject(session, null)
 }
 
 function loadSession(session) {
@@ -67,10 +68,22 @@ function loadSession(session) {
 }
 
 function sessionSelect(select) {
-    Object.keys(localStorage).forEach((key) => {
+    const session = sessionStorage.getSession()
+
+    select.textContent = ''
+
+    const cn = document.createElement('option')
+    cn.value = 'create_new'
+    cn.innerHTML = 'Create New'
+    select.appendChild(cn)
+
+    Object.keys(localStorage)?.forEach((key) => {
         const opt = document.createElement('option')
         opt.value = key
         opt.innerHTML = key
-        session_select.appendChild(opt)
+        if (session === key) {
+            opt.selected = true
+        }
+        select.appendChild(opt)
     })
 }
