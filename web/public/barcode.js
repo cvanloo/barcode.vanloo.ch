@@ -39,12 +39,23 @@ function generateBarcode(bc_img_url, bc_text, bc_name) {
 
     scratch_pad.appendChild(div)
 
-    idx++
+    return ++idx
 }
 
 function removeBarcode(idx) {
     const d = document.getElementById(`bc-${idx}`)
     scratch_pad.removeChild(d)
+
+    const session = sessionStorage.getSession()
+    const bcs = localStorage.getObject(session)
+    const start = bcs.indexOf(bcs.find(el => el.id === idx))
+    bcs.splice(start, 1)
+
+    if (bcs.length > 0) {
+        localStorage.setObject(session, bcs)
+    } else {
+        localStorage.removeItem(session)
+    }
 }
 
 function saveBarcode(code) {

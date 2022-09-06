@@ -67,7 +67,7 @@
                         const fr = new FileReader()
                         fr.addEventListener("load", function() {
                             b.image = fr.result
-                            generateBarcode(imgURL, b.data, b.name)
+                            b.id = generateBarcode(imgURL, b.data, b.name)
                             saveBarcode(b)
                             e.target.reset()
                         }, false)
