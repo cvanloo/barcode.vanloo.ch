@@ -3,9 +3,10 @@ const scratch_pad = document.getElementById('scratch-pad')
 let idx = 0;
 
 function generateBarcode(bc_img_url, bc_text, bc_name) {
+    const cidx = idx
     const div = document.createElement('div')
     div.classList.add('barcode')
-    div.id = `bc-${idx}`
+    div.id = `bc-${cidx}`
 
     const top_bar = document.createElement('div')
     top_bar.id = "top-bar"
@@ -20,7 +21,6 @@ function generateBarcode(bc_img_url, bc_text, bc_name) {
     const name_tag = document.createElement('p')
     name_tag.innerHTML = bc_name
 
-    const cidx = idx
     btn_close.onclick = () => removeBarcode(cidx)
 
     top_bar.appendChild(btn_move)
