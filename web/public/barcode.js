@@ -39,7 +39,7 @@ function generateBarcode(bc_img_url, bc_text, bc_name) {
 
     scratch_pad.appendChild(div)
 
-    return ++idx
+    return idx++
 }
 
 function removeBarcode(idx) {
