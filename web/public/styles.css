@@ -127,6 +127,7 @@ input[type="text"] {
     flex: 1;
 
     height: 85vh;
+    overflow: auto;
 }
 
 #scratch-pad {
