@@ -75,6 +75,7 @@ html,
 body {
     padding: 0;
     margin: 0;
+    /* font-size: clamp(1em, 1.3vw, 1.3em) !important; */
 }
 
 body {
@@ -185,24 +186,24 @@ input[type="text"] {
     background: var(--bc-bg-color);
 }
 
-.barcode #top-bar {
+.barcode #bc-top-bar {
     width: 100%;
     width: -moz-available;
     width: -webkit-fill-available;
     width: stretch;
 }
 
-.barcode #top-bar {
+.barcode #bc-top-bar {
     display: flex;
     flex-direction: row;
 }
 
-.barcode #top-bar button {
+.barcode #bc-top-bar button {
     background: var(--bc-button-bg-color);
     flex: 1;
 }
 
-.barcode #top-bar p {
+.barcode #bc-top-bar p {
     text-align: center;
     flex: 4;
 }

@@ -1,82 +1,120 @@
-const btn_generate = document.getElementById('btn-generate')
-const scratch_pad = document.getElementById('scratch-pad')
-let idx = 0;
+import 'api/storage'
 
-function generateBarcode(bc_img_url, bc_text, bc_name) {
-    const cidx = idx
+let _onBarcodesUpdate = () => {}
+let _barcodes = []
+let _moveAction = null;
+
+function renderFunc(fun) {
+    _onBarcodesUpdate = fun
+}
+
+function renderOnto(div) {
+    _barcodes.forEach((bc, i) => {
+        div.appendChild(_render(i, bc))
+    })
+}
+
+/* Returns a div filled out with the barcode's data.
+ * barcode = { name; url; text; }
+ */
+function _render(id, barcode) {
+    // Order matters!
+
     const div = document.createElement('div')
     div.classList.add('barcode')
-    div.id = `bc-${cidx}`
-
-    const top_bar = document.createElement('div')
-    top_bar.id = "top-bar"
 
     const btn_move = document.createElement('button')
-    const btn_close = document.createElement('button')
     btn_move.type = "button"
-    btn_close.type = "button"
-    btn_move.innerHTML = "Move"
-    btn_close.innerHTML = "Close"
+    if (_moveAction === null) {
+        btn_move.innerHTML = "Move"
+        btn_move.onclick = () => {
+            _moveAction = {}
+            _moveAction.from = id
+            _onBarcodesUpdate()
+        }
+    } else if (_moveAction.from === id) {
+        btn_move.innerHTML = "Stop"
+        btn_move.onclick = () => {
+            _moveAction = null
+            _onBarcodesUpdate()
+        }
+    } else {
+        btn_move.innerHTML = "Here"
+        btn_move.onclick = () => {
+            move((_moveAction.to = id, _moveAction))
+            _moveAction = null
+            _onBarcodesUpdate()
+        }
+    }
 
     const name_tag = document.createElement('p')
-    name_tag.innerHTML = bc_name
+    name_tag.innerHTML = barcode.name
 
-    btn_close.onclick = () => removeBarcode(cidx)
+    const btn_close = document.createElement('button')
+    btn_close.type = "button"
+    btn_close.innerHTML = "Close"
+    btn_close.onclick = () => remove(id)
 
+    const top_bar = document.createElement('div')
+    top_bar.id = "bc-top-bar"
     top_bar.appendChild(btn_move)
     top_bar.appendChild(name_tag)
     top_bar.appendChild(btn_close)
     div.appendChild(top_bar)
 
     const img = new Image(312, 80)
-    img.src = bc_img_url
+    img.src = barcode.url
     div.appendChild(img)
 
-    const p = document.createElement('p')
-    p.innerHTML = bc_text
+    const text_tag = document.createElement('p')
+    text_tag.innerHTML = barcode.text
+    div.appendChild(text_tag)
 
-    div.appendChild(p)
-
-    scratch_pad.appendChild(div)
-
-    return idx++
+    return div
 }
 
-function removeBarcode(idx) {
-    const d = document.getElementById(`bc-${idx}`)
-    scratch_pad.removeChild(d)
-
-    const session = sessionStorage.getSession()
-    const bcs = localStorage.getObject(session)
-    const start = bcs.indexOf(bcs.find(el => el.id === idx))
-    bcs.splice(start, 1)
-
-    if (bcs.length > 0) {
-        localStorage.setObject(session, bcs)
-    } else {
-        localStorage.removeItem(session)
-    }
+/* Add a barcode
+ * barcode = { name; url; text; }
+ */
+function add(barcode) {
+    _barcodes.push(barcode)
+    _save(_barcodes.length-1, barcode)
+    _onBarcodesUpdate()
 }
 
-function saveBarcode(code) {
-    const session = sessionStorage.getSession()
-    const bcs = localStorage.getObject(session) ?? []
-    bcs[bcs.length] = code
-    localStorage.setObject(session, bcs)
+function remove(id) {
+    _delete(id, _barcodes.splice(id, 1))
+    _onBarcodesUpdate()
 }
 
-function createSession() {
-    scratch_pad.textContent = ''
-    const session = sessionStorage.newSession()
+function move(moveAction) {
+    _barcodes.splice(moveAction.to, 0, _barcodes.splice(moveAction.from, 1)[0])
+    localStorage.replaceObject(sessionStorage.getSession(), _ => _barcodes)
+    _onBarcodesUpdate()
 }
 
-function loadSession(session) {
-    scratch_pad.textContent = ''
-    sessionStorage.setSession(session)
-    localStorage.getObject(session)?.forEach((bc) => {
-        generateBarcode(bc.image, bc.data, bc.name)
+//
+// Barcode local storage
+//
+
+function _save(id, barcode) {
+    localStorage.replaceObject(sessionStorage.getSession(), old => {
+        old = old ?? []
+        old[id] = barcode
+        return old
     })
 }
+
+function _delete(id, barcode) {
+    localStorage.replaceObject(sessionStorage.getSession(), old => {
+        old.splice(id, 1)
+        return old.length > 0 ? old : null
+    })
+}
+
+//
+// Sessions
+//
 
 function sessionSelect(select) {
     select.textContent = ''
@@ -86,10 +124,10 @@ function sessionSelect(select) {
     cn.innerHTML = 'Create New'
     select.appendChild(cn)
 
-    const session = sessionStorage.getSession()
     const curr = document.createElement('option')
+    const session = sessionStorage.getSession()
     curr.value = session
-    curr.innerHTML = session
+    curr.innerHTML = `[CURRENT] ${session}`
     curr.selected = true
     select.appendChild(curr)
 
@@ -100,3 +138,12 @@ function sessionSelect(select) {
         select.appendChild(opt)
     })
 }
+
+function loadSession(session) {
+    session = session ?? sessionStorage.newSession()
+    sessionStorage.setSession(session)
+    _barcodes = localStorage.getObject(session) ?? []
+    _onBarcodesUpdate()
+}
+
+export { loadSession, sessionSelect, add, remove, move, renderFunc, renderOnto }
