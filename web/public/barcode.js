@@ -78,38 +78,20 @@ function _render(id, barcode) {
  */
 function add(barcode) {
     _barcodes.push(barcode)
-    _save(_barcodes.length-1, barcode)
+    localStorage.setObject(sessionStorage.getSession(), _barcodes)
     _onBarcodesUpdate()
 }
 
 function remove(id) {
-    _delete(id, _barcodes.splice(id, 1))
+    _barcodes.splice(id, 1)
+    localStorage.setObject(sessionStorage.getSession(), _barcodes)
     _onBarcodesUpdate()
 }
 
 function move(moveAction) {
     _barcodes.splice(moveAction.to, 0, _barcodes.splice(moveAction.from, 1)[0])
-    localStorage.replaceObject(sessionStorage.getSession(), _ => _barcodes)
+    localStorage.setObject(sessionStorage.getSession(), _barcodes)
     _onBarcodesUpdate()
-}
-
-//
-// Barcode local storage
-//
-
-function _save(id, barcode) {
-    localStorage.replaceObject(sessionStorage.getSession(), old => {
-        old = old ?? []
-        old[id] = barcode
-        return old
-    })
-}
-
-function _delete(id, barcode) {
-    localStorage.replaceObject(sessionStorage.getSession(), old => {
-        old.splice(id, 1)
-        return old.length > 0 ? old : null
-    })
 }
 
 //
