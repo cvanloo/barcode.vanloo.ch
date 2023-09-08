@@ -54,23 +54,6 @@
     --barcode-border-color: black;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --fg-color: #FCF9FB;
-        --bg-color: #111328;
-        --bg-image: url("");
-
-        --panel-bg-color: #2c3e4c;
-        --bc-bg-color: #FAF2FC;
-        --bc-fg-color: black;
-        --bc-button-bg-color: #FFF;
-        --form-bg-color: #88a7ce;
-        --form-border-color: #ae88ce;
-
-        --barcode-border-color: black;
-    }
-}
-
 html,
 body {
     padding: 0;
@@ -137,6 +120,7 @@ input[type="text"] {
 
     display: flex;
     flex-flow: wrap;
+    align-content: flex-start;
 
     height: 85vh;
     overflow: scroll;
