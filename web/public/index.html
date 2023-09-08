@@ -41,45 +41,65 @@
         <div id="scratch-pad" class="panel"></div>
     </div>
 
-    <script src="storage.js"></script>
-    <script src="barcode.js"></script>
-    <script src="backend.js"></script>
-    <script>
+    <script type="importmap">
+        {
+            "imports": {
+                "api/barcode": "./barcode.js",
+                "api/storage": "./storage.js",
+                "api/backend": "./backend.js"
+            }
+        }
+    </script>
+    <script type="module">
+        import { loadSession, sessionSelect, add as addBarcode, renderFunc, renderOnto } from 'api/barcode'
+        import 'api/storage' // imported for side-effects
+        import { supported_types, request as generateBarcode } from 'api/backend'
+
+        const scratch_pad = document.getElementById('scratch-pad')
         const form_create = document.getElementById('form-create')
-        form_create.addEventListener("reset", function(e) {
+
+        renderFunc(() => {
+            scratch_pad.textContent = ''
+            renderOnto(scratch_pad)
+        })
+
+        form_create.addEventListener('reset', function(e) {
             e.preventDefault()
             e.target.data.value = ''
             e.target.name.value = ''
         })
-        form_create.addEventListener("submit", function(e) {
+
+        form_create.addEventListener('submit', function(e) {
             e.preventDefault()
 
             const b = {
-                'code': e.target.code.value,
-                'data': e.target.data.value,
+                'type': e.target.code.value,
+                'text': e.target.data.value,
                 'name': e.target.name.value
             }
 
-            requestBarcodeOfType(b.code, b.data).then(imgURL => {
-                fetch(imgURL)
-                    .then(r => r.blob())
-                    .then(blob => {
-                        const fr = new FileReader()
-                        fr.addEventListener("load", function() {
-                            b.image = fr.result
-                            b.id = generateBarcode(imgURL, b.data, b.name)
-                            saveBarcode(b)
-                            e.target.reset()
-                        }, false)
-                        fr.readAsDataURL(blob)
+            generateBarcode(b.type, b.text)
+                .then(fetch)
+                .then(r => r.blob())
+                .then(blob => {
+                    // TODO: weird, fix this
+                    const fr = new FileReader()
+                    fr.addEventListener('load', function() {
+                        b.url = fr.result
+                        addBarcode(b)
+                        e.target.reset()
                     })
-            })
+                    fr.readAsDataURL(blob)
+                })
+                .catch(error => {
+                    alert(error)
+                })
         })
 
         const select = document.getElementById('code-select')
-        requestBarcodeTypes().then(types => {
+        supported_types().then(types => {
             select.removeChild(select.children[0])
-            types.forEach((t) => {
+            types.forEach(t => {
                 const opt = document.createElement('option')
                 opt.value = t.Value
                 opt.innerHTML = t.Name
@@ -89,13 +109,13 @@
 
         const session_select = document.getElementById('session-select')
         sessionSelect(session_select)
-        session_select.addEventListener("change", function(e) {
-            if ("create_new" === session_select.value) {
-                createSession()
-                sessionSelect(session_select)
-            } else {
-                loadSession(session_select.value)
-            }
+        session_select.addEventListener('change', function(e) {
+            loadSession(
+                session_select.value === 'create_new'
+                ? null
+                : session_select.value
+            )
+            sessionSelect(session_select)
         })
         loadSession(sessionStorage.getSession())
     </script>

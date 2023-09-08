@@ -4,7 +4,15 @@ Storage.prototype.getObject = function(key) {
 }
 
 Storage.prototype.setObject = function(key, obj) {
-    this.setItem(key, JSON.stringify(obj))
+    if (obj === null) {
+        this.removeItem(key)
+    } else {
+        this.setItem(key, JSON.stringify(obj))
+    }
+}
+
+Storage.prototype.replaceObject = function(key, fun) {
+    this.setObject(key, fun(this.getObject(key)))
 }
 
 function uuidv4() {
@@ -15,7 +23,7 @@ function uuidv4() {
 
 Storage.prototype.getSession = function() {
     let u = this.getItem('uuid')
-    if (null === u) {
+    if (u === null) {
         u = uuidv4()
         this.setItem('uuid', u)
     }
@@ -31,3 +39,5 @@ Storage.prototype.newSession = function() {
 Storage.prototype.setSession = function(session) {
     this.setItem('uuid', session)
 }
+
+export {}
