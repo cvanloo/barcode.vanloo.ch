@@ -57,15 +57,15 @@
 @media (prefers-color-scheme: dark) {
     :root {
         --fg-color: #FCF9FB;
-        --bg-color: black;
+        --bg-color: #111328;
         --bg-image: url("");
 
-        --panel-bg-color: #282627;
+        --panel-bg-color: #2c3e4c;
         --bc-bg-color: #FAF2FC;
         --bc-fg-color: black;
         --bc-button-bg-color: #FFF;
-        --form-bg-color: #FAF2FC;
-        --form-border-color: #E5E5E5;
+        --form-bg-color: #88a7ce;
+        --form-border-color: #ae88ce;
 
         --barcode-border-color: black;
     }
@@ -95,6 +95,7 @@ input[type="text"] {
     border: 1px solid;
     border-radius: 5px;
     border-color: var(--form-border-color);
+    font: var(--font);
     font-style: normal;
 }
 
