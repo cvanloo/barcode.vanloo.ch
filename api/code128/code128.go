@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"reflect"
 )
 
 // ASCII special characters
@@ -20,7 +21,7 @@ const (
 	BS  = 0x08 // '\b' Backspace
 	HT  = 0x09 // '\t' Horizontal Tab
 	LF  = 0x0A // '\n' Line Feed
-	VT  = 0x0B // '\v' Verical Tab
+	VT  = 0x0B // '\v' Vertical Tab
 	FF  = 0x0C // '\f' Form Feed
 	CR  = 0x0D // '\r' Carriage Return
 	SO  = 0x0E //      Shift Out
@@ -171,22 +172,258 @@ var bitpattern = [][]int{
 	{START_C, START_C, START_C, 2, 1, 1, 2, 3, 2},
 }
 
-// Decode code128 barcode
-func Decode(img image.Image) (string, error) {
-	for x := 0; x < img.Bounds().Max.X; x++ {
+func Widths(img image.Image) (widths []int, err error) {
+	bars := false
+	run := 0
+	for x := 0; x < img.Bounds().Dx(); x++ {
 		c := img.At(x, 0)
-		//fmt.Printf("c: %v\n", c)
+		r, g, b, _ := c.RGBA()
+		_, _ = g, b
+
+		if r == 0x0000 {
+			if bars {
+				run++
+			} else {
+				// finish space run
+				widths = append(widths, run)
+
+				bars = true
+				run = 1
+			}
+		} else if r == 0xFFFF {
+			if !bars {
+				run++
+			} else {
+				// finish bar run
+				widths = append(widths, run)
+
+				bars = false
+				run = 1
+			}
+		}
+	}
+	// don't forget to record last run!
+	widths = append(widths, run)
+	return widths, nil
+}
+
+var DecodeTableA = [][][][][][]string{
+	2: {
+		1: {
+			1: {
+				2: {
+					1: {
+						4: "START_B",
+					},
+					3: {
+						2: "START_C",
+					},
+				},
+				4: {
+					1: {
+						2: "START_A",
+					},
+				},
+			},
+		},
+	},
+}
+
+var DecodeTableB = [][][][][][]string{
+	1: {
+		1: {
+			1: {
+				3: {
+					2: {
+						3: "A",
+					},
+				},
+			},
+			2: {
+				3: {
+					1: {
+						3: "D",
+					},
+				},
+			},
+			3: {
+				1: {
+					4: {
+						1: "CODE_C",
+					},
+				},
+			},
+		},
+		2: {
+			2: {
+				1: {
+					3: {
+						2: "-",
+					},
+				},
+			},
+		},
+		3: {
+			1: {
+				1: {
+					2: {
+						3: "B",
+					},
+				},
+				3: {
+					2: {
+						1: "C",
+					},
+				},
+			},
+		},
+	},
+	2: {
+		1: {
+			1: {
+				2: {
+					1: {
+						4: "START_B",
+					},
+					3: {
+						2: "START_C",
+					},
+				},
+				4: {
+					1: {
+						2: "START_A",
+					},
+				},
+			},
+		},
+	},
+}
+
+var DecodeTableC = [][][][][][]string{
+	1: {
+		1: {
+			2: {
+				2: {
+					3: {
+						2: "12",
+					},
+				},
+			},
+		},
+	},
+	2: {
+		1: {
+			1: {
+				2: {
+					1: {
+						4: "START_B",
+					},
+					3: {
+						2: "START_C",
+					},
+				},
+				4: {
+					1: {
+						2: "START_A",
+					},
+				},
+			},
+		},
+	},
+}
+
+func Decode(img image.Image) (string, error) {
+	widths, err := Widths(img)
+	if err != nil {
+		return "", err
+	}
+
+	decodeTable := DecodeTableA
+	current := 0
+
+	fmt.Printf("%+v\n", widths)
+
+	fmt.Printf("Quiet Zone Start: %d\n", widths[current])
+
+	defer func() {
+		if r := recover(); r != nil {
+			table := "Unknown?"
+			if reflect.ValueOf(decodeTable).Pointer() == reflect.ValueOf(DecodeTableA).Pointer() {
+				table = "A"
+			}
+			if reflect.ValueOf(decodeTable).Pointer() == reflect.ValueOf(DecodeTableB).Pointer() {
+				table = "B"
+			}
+			if reflect.ValueOf(decodeTable).Pointer() == reflect.ValueOf(DecodeTableC).Pointer() {
+				table = "C"
+			}
+			fmt.Printf("(Table %s) Unable to parse sequence: %d %d %d %d %d %d\n", table, widths[current-5], widths[current-4], widths[current-3], widths[current-2], widths[current-1], widths[current-0])
+		}
+	}()
+
+	current += 6
+	for current < len(widths) {
+		sym := decodeTable[widths[current-5]][widths[current-4]][widths[current-3]][widths[current-2]][widths[current-1]][widths[current-0]]
+		fmt.Printf("Sym: %s\n", sym)
+		current += 6
+
+		switch sym {
+		case "START_A":
+			fallthrough
+		case "CODE_A":
+			decodeTable = DecodeTableA
+		case "START_B":
+			fallthrough
+		case "CODE_B":
+			decodeTable = DecodeTableB
+		case "START_C":
+			fallthrough
+		case "CODE_C":
+			decodeTable = DecodeTableC
+		}
+	}
+
+	return "", errors.New("not implemented")
+}
+
+/*
+func Decode(img image.Image) (string, error) {
+	set := false
+	count := 0
+	fmt.Printf("Width: %d\n", img.Bounds().Dx())
+	for x := 0; x < img.Bounds().Dx(); x++ {
+		c := img.At(x, 0)
+
 		r, _, _, _ := c.RGBA()
 		if r == 0x0 {
-			fmt.Println(0)
+			if set {
+				count++
+			} else {
+				fmt.Printf("0 × %d\n", count)
+				count = 1
+				set = true
+			}
 		} else if r == 0xFFFF {
-			fmt.Println(1)
+			if !set {
+				count++
+			} else {
+				fmt.Printf("1 × %d\n", count)
+				count = 1
+				set = false
+			}
+		} else {
+			panic("i don't know how to handle this")
 		}
+	}
+	if set {
+		fmt.Printf("1 × %d\n", count)
+	} else {
+		fmt.Printf("0 × %d\n", count)
 	}
 	return "", errors.New("Not implemented")
 }
+*/
 
-// Encode text to code128
 func Encode(text string) (image.Image, error) {
 	return nil, errors.New("Not implemented")
 }

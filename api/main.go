@@ -3,33 +3,33 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"image"
-	"image/png"
+	_ "image/png"
 	"log"
-	"net/http"
 	"os"
 
-	"github.com/boombuler/barcode"
-	"github.com/boombuler/barcode/code128"
-
-	c "framagit.org/miya/barcode.vanloo.ch/api/code128"
+	"framagit.org/miya/barcode.vanloo.ch/api/code128"
 )
 
-func main2() {
-	f, err := os.Open("test_code128.png")
-	if err != nil {
-		log.Fatalf("opening test file: %v", err)
+func must[T any](t T, e error) T {
+	if e != nil {
+		panic(fmt.Sprintf("must: %v", e))
 	}
+	return t
+}
+
+func main() {
+	f := must(os.Open("code128/test_code128.png"))
 	img, _, err := image.Decode(f)
 	if err != nil {
 		log.Fatalf("decoding image: %v", err)
 	}
-	fmt.Println(c.Decode(img))
+	fmt.Println(must(code128.Decode(img)))
 }
 
-func main() {
+/*
+func main2() {
 	mux := http.NewServeMux()
 
 	enableCORS := func(w *http.ResponseWriter) {
@@ -47,7 +47,7 @@ func main() {
 		}, /*{
 			Value: "gs1-128",
 			Name:  "GS1-128",
-		}*/}
+		}*//*}
 
 		bs, err := json.Marshal(supported)
 		if err != nil {
@@ -86,3 +86,4 @@ func main() {
 	fmt.Println("Listening and serving on :8080")
 	http.ListenAndServe(":8080", mux)
 }
+*/
