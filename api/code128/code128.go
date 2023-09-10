@@ -8,168 +8,552 @@ import (
 	"reflect"
 )
 
-// ASCII special characters
 const (
-	NUL = 0x00 // '\0' Null
-	SOH = 0x01 //      Start of Header
-	STX = 0x02 //      Start of Text
-	ETX = 0x03 //      End of Text
-	EOT = 0x04 //      End of Transmission
-	ENQ = 0x05 //      Enquiry
-	ACK = 0x06 //      Acknowledgement
-	BEL = 0x07 // '\a' Bell
-	BS  = 0x08 // '\b' Backspace
-	HT  = 0x09 // '\t' Horizontal Tab
-	LF  = 0x0A // '\n' Line Feed
-	VT  = 0x0B // '\v' Vertical Tab
-	FF  = 0x0C // '\f' Form Feed
-	CR  = 0x0D // '\r' Carriage Return
-	SO  = 0x0E //      Shift Out
-	SI  = 0x0F //      Shift In
-	DLE = 0x10 //      Device Idle
-	DC1 = 0x11 //      Device Control 1
-	DC2 = 0x12 //      Device Control 2
-	DC3 = 0x13 //      Device Control 3
-	DC4 = 0x14 //      Device Control 4
-	NAK = 0x15 //      Negative Acknoledgement
-	SYN = 0x16 //      Synchronize
-	ETB = 0x17 //      End of Transmission Block
-	CAN = 0x18 //      Cancel
-	EM  = 0x19 //      End of Medium
-	SUB = 0x1A //      Substitute
-	ESC = 0x1B // '\e' Escape
-	FS  = 0x1C //      Field Separator
-	GS  = 0x1D //      Group Separator
-	RS  = 0x1E //      Record Separator
-	US  = 0x1F //      Unit Separator
-	SP  = 0x20 //      Space
-	DEL = 0x7F //      Delete
+	SPACE             = 0x00
+	EXCLAMATION       = 0x01
+	DOUBLE_QUOTE      = 0x02
+	POUND             = 0x03
+	DOLLAR            = 0x04
+	PERCENT           = 0x05
+	AMPERSAND         = 0x06
+	SINGLE_QUOTE      = 0x07
+	OPEN_PARENTHESIS  = 0x08
+	CLOSE_PARENTHESIS = 0x09
+	ASTERISK          = 0x0a
+	PLUS              = 0x0b
+	COMMA             = 0x0c
+	HYPHEN            = 0x0d
+	PERIOD            = 0x0e
+	SLASH             = 0x0f
+	ZERO              = 0x10
+	ONE               = 0x11
+	TWO               = 0x12
+	THREE             = 0x13
+	FOUR              = 0x14
+	FIVE              = 0x15
+	SIX               = 0x16
+	SEVEN             = 0x17
+	EIGHT             = 0x18
+	NINE              = 0x19
+	COLON             = 0x1a
+	SEMICOLON         = 0x1b
+	LESS_THAN         = 0x1c
+	EQUAL             = 0x1d
+	GREATER_THAN      = 0x1e
+	QUESTION          = 0x1f
+	AT                = 0x20
+	A                 = 0x21
+	B                 = 0x22
+	C                 = 0x23
+	D                 = 0x24
+	E                 = 0x25
+	F                 = 0x26
+	G                 = 0x27
+	H                 = 0x28
+	I                 = 0x29
+	J                 = 0x2a
+	K                 = 0x2b
+	L                 = 0x2c
+	M                 = 0x2d
+	N                 = 0x2e
+	O                 = 0x2f
+	P                 = 0x30
+	Q                 = 0x31
+	R                 = 0x32
+	S                 = 0x33
+	T                 = 0x34
+	U                 = 0x35
+	V                 = 0x36
+	W                 = 0x37
+	X                 = 0x38
+	Y                 = 0x39
+	Z                 = 0x3a
+
+	CODE_C = 0x63
+	CODE_B = 0x64
+	CODE_A = 0x65
+
+	START_A = 0x67
+	START_B = 0x68
+	START_C = 0x69
+	STOP    = 0x6a
+
+	REVERSE_STOP = -1
 )
 
-// Code128 special characters
-const (
-	FNC3    = 96 + 32
-	FNC2    = 97 + 32
-	SHIFT   = 98 + 32
-	CODE_C  = 99 + 32
-	CODE_B  = 100 + 32
-	FNC4_B  = 100 + 32
-	CODE_A  = 101 + 32
-	FNC4_A  = 101 + 32
-	FNC1    = 102 + 32
-	START_A = 103 + 32
-	START_B = 104 + 32
-	START_C = 105 + 32
-	STOP    = 106 + 32
-)
+var DecodeTableA = [][][][][][]int{
+	1: {
+		1: {
+			1: {
+				3: {
+					2: {
+						3: A,
+					},
+				},
+			},
+			2: {
+				1: {
+					3: {
+						3: J,
+					},
+				},
+				3: {
+					1: {
+						3: D,
+					},
+					3: {
+						1: K,
+					},
+				},
+			},
+			3: {
+				1: {
+					2: {
+						3: M,
+					},
+				},
+				3: {
+					2: {
+						1: N,
+					},
+				},
+			},
+		},
+		2: {
+			1: {
+				2: {
+					2: {
+						3: POUND,
+					},
+				},
+			},
+		},
+		3: {
+			1: {
+				1: {
+					2: {
+						3: B,
+					},
+				},
+				3: {
+					2: {
+						1: C,
+					},
+				},
+			},
+			2: {
+				1: {
+					1: {
+						3: E,
+					},
+					3: {
+						1: L,
+					},
+				},
+				3: {
+					1: {
+						1: F,
+					},
+				},
+			},
+			3: {
+				1: {
+					2: {
+						1: O,
+					},
+				},
+			},
+		},
+	},
+	2: {
+		1: {
+			1: {
+				1: {
+					3: {
+						3: REVERSE_STOP,
+					},
+				},
+				2: {
+					1: {
+						4: START_B,
+					},
+					3: {
+						2: START_C,
+					},
+				},
+				3: {
+					1: {
+						3: G,
+					},
+					3: {
+						1: Q,
+					},
+				},
+				4: {
+					1: {
+						2: START_A,
+					},
+				},
+			},
+			2: {
+				2: {
+					2: {
+						2: SPACE,
+					},
+				},
+			},
+			3: {
+				1: {
+					1: {
+						3: S,
+					},
+					3: {
+						1: U,
+					},
+				},
+				3: {
+					1: {
+						1: T,
+					},
+				},
+			},
+		},
+		2: {
+			2: {
+				1: {
+					2: {
+						2: EXCLAMATION,
+					},
+				},
+				2: {
+					2: {
+						1: DOUBLE_QUOTE,
+					},
+				},
+			},
+		},
+		3: {
+			1: {
+				1: {
+					1: {
+						3: H,
+					},
+					3: {
+						1: R,
+					},
+				},
+				3: {
+					1: {
+						1: I,
+					},
+				},
+			},
+		},
+	},
+	3: {
+		1: {
+			1: {
+				1: {
+					2: {
+						3: V,
+					},
+				},
+				3: {
+					2: {
+						1: W,
+					},
+				},
+			},
+			2: {
+				1: {
+					1: {
+						3: Y,
+					},
+				},
+				3: {
+					1: {
+						1: Z,
+					},
+				},
+			},
+			3: {
+				1: {
+					2: {
+						1: P,
+					},
+				},
+			},
+		},
+		3: {
+			1: {
+				1: {
+					2: {
+						1: X,
+					},
+				},
+			},
+		},
+	},
+}
 
-var bitpattern = [][]int{
-	{' ', ' ', 0, 2, 1, 2, 2, 2, 2},
-	{'!', '!', 1, 2, 2, 2, 1, 2, 2},
-	{'"', '"', 2, 2, 2, 2, 2, 2, 1},
-	{'#', '#', 3, 1, 2, 1, 2, 2, 3},
-	{'$', '$', 4, 1, 2, 1, 3, 2, 2},
-	{'%', '%', 5, 1, 3, 1, 2, 2, 2},
-	{'&', '&', 6, 1, 2, 2, 2, 1, 3},
-	{'\'', '\'', 7, 1, 2, 2, 3, 1, 2},
-	{'(', '(', 8, 1, 3, 2, 2, 1, 2},
-	{')', ')', 9, 2, 2, 1, 2, 1, 3},
-	{'*', '*', 10, 2, 2, 1, 3, 1, 2},
-	{'+', '+', 11, 2, 3, 1, 2, 1, 2},
-	{',', ',', 12, 1, 1, 2, 2, 3, 2},
-	{'-', '-', 13, 1, 2, 2, 1, 3, 2},
-	{'.', '.', 14, 1, 2, 2, 2, 3, 1},
-	{'/', '/', 15, 1, 1, 3, 2, 2, 2},
-	{'0', '0', 16, 1, 2, 3, 1, 2, 2},
-	{'1', '1', 17, 1, 2, 3, 2, 2, 1},
-	{'2', '2', 18, 2, 2, 3, 2, 1, 1},
-	{'3', '3', 19, 2, 2, 1, 1, 3, 2},
-	{'4', '4', 20, 2, 2, 1, 2, 3, 1},
-	{'5', '5', 21, 2, 1, 3, 2, 1, 2},
-	{'6', '6', 22, 2, 2, 3, 1, 1, 2},
-	{'7', '7', 23, 3, 1, 2, 1, 3, 1},
-	{'8', '8', 24, 3, 1, 1, 2, 2, 2},
-	{'9', '9', 25, 3, 2, 1, 1, 2, 2},
-	{':', ':', 26, 3, 2, 1, 2, 2, 1},
-	{';', ';', 27, 3, 1, 2, 2, 1, 2},
-	{'<', '<', 28, 3, 2, 2, 1, 1, 2},
-	{'=', '=', 29, 3, 2, 2, 2, 1, 1},
-	{'>', '>', 30, 2, 1, 2, 1, 2, 3},
-	{'?', '?', 31, 2, 1, 2, 3, 2, 1},
-	{'@', '@', 32, 2, 3, 2, 1, 2, 1},
-	{'A', 'A', 33, 1, 1, 1, 3, 2, 3},
-	{'B', 'B', 34, 1, 3, 1, 1, 2, 3},
-	{'C', 'C', 35, 1, 3, 1, 3, 2, 1},
-	{'D', 'D', 36, 1, 1, 2, 3, 1, 3},
-	{'E', 'E', 37, 1, 3, 2, 1, 1, 3},
-	{'F', 'F', 38, 1, 3, 2, 3, 1, 1},
-	{'G', 'G', 39, 2, 1, 1, 3, 1, 3},
-	{'H', 'H', 40, 2, 3, 1, 1, 1, 3},
-	{'I', 'I', 41, 2, 3, 1, 3, 1, 1},
-	{'J', 'J', 42, 1, 1, 2, 1, 3, 3},
-	{'K', 'K', 43, 1, 1, 2, 3, 3, 1},
-	{'L', 'L', 44, 1, 3, 2, 1, 3, 1},
-	{'M', 'M', 45, 1, 1, 3, 1, 2, 3},
-	{'N', 'N', 46, 1, 1, 3, 3, 2, 1},
-	{'O', 'O', 47, 1, 3, 3, 1, 2, 1},
-	{'P', 'P', 48, 3, 1, 3, 1, 2, 1},
-	{'Q', 'Q', 49, 2, 1, 1, 3, 3, 1},
-	{'R', 'R', 50, 2, 3, 1, 1, 3, 1},
-	{'S', 'S', 51, 2, 1, 3, 1, 1, 3},
-	{'T', 'T', 52, 2, 1, 3, 3, 1, 1},
-	{'U', 'U', 53, 2, 1, 3, 1, 3, 1},
-	{'V', 'V', 54, 3, 1, 1, 1, 2, 3},
-	{'W', 'W', 55, 3, 1, 1, 3, 2, 1},
-	{'X', 'X', 56, 3, 3, 1, 1, 2, 1},
-	{'Y', 'Y', 57, 3, 1, 2, 1, 1, 3},
-	{'Z', 'Z', 58, 3, 1, 2, 3, 1, 1},
-	{'[', '[', 59, 3, 3, 2, 1, 1, 1},
-	{'\\', '\\', 60, 3, 1, 4, 1, 1, 1},
-	{']', ']', 61, 2, 2, 1, 4, 1, 1},
-	{'^', '^', 62, 4, 3, 1, 1, 1, 1},
-	{'_', '_', 63, 1, 1, 1, 2, 2, 4},
-	{NUL, '`', 64, 1, 1, 1, 4, 2, 2},
-	{SOH, 'a', 65, 1, 2, 1, 1, 2, 4},
-	{STX, 'b', 66, 1, 2, 1, 4, 2, 1},
-	{ETX, 'c', 67, 1, 4, 1, 1, 2, 2},
-	{EOT, 'd', 68, 1, 4, 1, 2, 2, 1},
-	{ENQ, 'e', 69, 1, 1, 2, 2, 1, 4},
-	{ACK, 'f', 70, 1, 1, 2, 4, 1, 2},
-	{BEL, 'g', 71, 1, 2, 2, 1, 1, 4},
-	{BS, 'h', 72, 1, 2, 2, 4, 1, 1},
-	{HT, 'i', 73, 1, 4, 2, 1, 1, 2},
-	{LF, 'j', 74, 1, 4, 2, 2, 1, 1},
-	{VT, 'k', 75, 2, 4, 1, 2, 1, 1},
-	{FF, 'l', 76, 2, 2, 1, 1, 1, 4},
-	{CR, 'm', 77, 4, 1, 3, 1, 1, 1},
-	{SO, 'n', 78, 2, 4, 1, 1, 1, 2},
-	{SI, 'o', 79, 1, 3, 4, 1, 1, 1},
-	{DLE, 'p', 80, 1, 1, 1, 2, 4, 2},
-	{DC1, 'q', 81, 1, 2, 1, 1, 4, 2},
-	{DC2, 'r', 82, 1, 2, 1, 2, 4, 1},
-	{DC3, 's', 83, 1, 1, 4, 2, 1, 2},
-	{DC4, 't', 84, 1, 2, 4, 1, 1, 2},
-	{NAK, 'u', 85, 1, 2, 4, 2, 1, 1},
-	{SYN, 'v', 86, 4, 1, 1, 2, 1, 2},
-	{ETB, 'w', 87, 4, 2, 1, 1, 1, 2},
-	{CAN, 'x', 88, 4, 2, 1, 2, 1, 1},
-	{EM, 'y', 89, 2, 1, 2, 1, 4, 1},
-	{SUB, 'z', 90, 2, 1, 4, 1, 2, 1},
-	{ESC, '{', 91, 4, 1, 2, 1, 2, 1},
-	{FS, '|', 92, 1, 1, 1, 1, 4, 3},
-	{GS, '}', 93, 1, 1, 1, 3, 4, 1},
-	{RS, '~', 94, 1, 3, 1, 1, 4, 1},
-	{US, DEL, 95, 1, 1, 4, 1, 1, 3},
-	{FNC3, FNC3, 96, 1, 1, 4, 3, 1, 1},
-	{FNC2, FNC2, 97, 4, 1, 1, 1, 1, 3},
-	{SHIFT, SHIFT, 98, 4, 1, 1, 3, 1, 1},
-	{CODE_C, CODE_C, 99, 1, 1, 3, 1, 4, 1},
-	{CODE_B, FNC4_B, CODE_B, 1, 1, 4, 1, 3, 1},
-	{FNC4_A, CODE_A, CODE_A, 3, 1, 1, 1, 4, 1},
-	{FNC1, FNC1, FNC1, 4, 1, 1, 1, 3, 1},
-	{START_A, START_A, START_A, 2, 1, 1, 4, 1, 2},
-	{START_B, START_B, START_B, 2, 1, 1, 2, 1, 4},
-	{START_C, START_C, START_C, 2, 1, 1, 2, 3, 2},
+var DecodeTableB = [][][][][][]int{
+	1: {
+		1: {
+			1: {
+				3: {
+					2: {
+						3: A,
+					},
+				},
+			},
+			2: {
+				1: {
+					3: {
+						3: J,
+					},
+				},
+				3: {
+					1: {
+						3: D,
+					},
+					3: {
+						1: K,
+					},
+				},
+			},
+			3: {
+				1: {
+					2: {
+						3: M,
+					},
+				},
+				3: {
+					2: {
+						1: N,
+					},
+				},
+			},
+		},
+		3: {
+			1: {
+				1: {
+					2: {
+						3: B,
+					},
+				},
+				3: {
+					2: {
+						1: C,
+					},
+				},
+			},
+			2: {
+				1: {
+					1: {
+						3: E,
+					},
+					3: {
+						1: L,
+					},
+				},
+				3: {
+					1: {
+						1: F,
+					},
+				},
+			},
+			3: {
+				1: {
+					2: {
+						1: O,
+					},
+				},
+			},
+		},
+	},
+	2: {
+		1: {
+			1: {
+				1: {
+					3: {
+						3: REVERSE_STOP,
+					},
+				},
+				2: {
+					1: {
+						4: START_B,
+					},
+					3: {
+						2: START_C,
+					},
+				},
+				3: {
+					1: {
+						3: G,
+					},
+					3: {
+						1: Q,
+					},
+				},
+				4: {
+					1: {
+						2: START_A,
+					},
+				},
+			},
+			3: {
+				1: {
+					1: {
+						3: S,
+					},
+					3: {
+						1: U,
+					},
+				},
+				3: {
+					1: {
+						1: T,
+					},
+				},
+			},
+		},
+		3: {
+			1: {
+				1: {
+					1: {
+						3: H,
+					},
+					3: {
+						1: R,
+					},
+				},
+				3: {
+					1: {
+						1: I,
+					},
+				},
+			},
+		},
+	},
+	3: {
+		1: {
+			1: {
+				1: {
+					2: {
+						3: V,
+					},
+				},
+				3: {
+					2: {
+						1: W,
+					},
+				},
+			},
+			2: {
+				1: {
+					1: {
+						3: Y,
+					},
+				},
+				3: {
+					1: {
+						1: Z,
+					},
+				},
+			},
+			3: {
+				1: {
+					2: {
+						1: P,
+					},
+				},
+			},
+		},
+		3: {
+			1: {
+				1: {
+					2: {
+						1: X,
+					},
+				},
+			},
+		},
+	},
+}
+
+var DecodeTableC = [][][][][][]int{}
+
+var ASCIITable = map[int]string{
+	SPACE:             " ",
+	EXCLAMATION:       "!",
+	DOUBLE_QUOTE:      `"`,
+	POUND:             "#",
+	DOLLAR:            "$",
+	PERCENT:           "%",
+	AMPERSAND:         "&",
+	SINGLE_QUOTE:      "'",
+	OPEN_PARENTHESIS:  "(",
+	CLOSE_PARENTHESIS: ")",
+	ASTERISK:          "*",
+	PLUS:              "+",
+	COMMA:             ",",
+	HYPHEN:            "-",
+	PERIOD:            ".",
+	SLASH:             "/",
+	ZERO:              "0",
+	ONE:               "1",
+	TWO:               "2",
+	THREE:             "3",
+	FOUR:              "4",
+	FIVE:              "5",
+	SIX:               "6",
+	SEVEN:             "7",
+	EIGHT:             "8",
+	NINE:              "9",
+	COLON:             ":",
+	SEMICOLON:         ";",
+	LESS_THAN:         "<",
+	EQUAL:             "=",
+	GREATER_THAN:      ">",
+	QUESTION:          "?",
+	AT:                "@",
+	A: "A",
+	B: "B",
+	C: "C",
+	D: "D",
+	E: "E",
+	F: "F",
+	G: "G",
+	H: "H",
+	I: "I",
+	J: "J",
+	K: "K",
+	L: "L",
+	M: "M",
+	N: "N",
+	O: "O",
+	P: "P",
+	Q: "Q",
+	R: "R",
+	S: "S",
+	T: "T",
+	U: "U",
+	V: "V",
+	W: "W",
+	X: "X",
+	Y: "Y",
+	Z: "Z",
+
+	CODE_C: "<CODE_C>",
+	CODE_B: "<CODE_B>",
+	CODE_A: "<CODE_A>",
+
+	START_A: "<START_A>",
+	START_B: "<START_B>",
+	START_C: "<START_C>",
+	STOP:    "<STOP>",
+
+	REVERSE_STOP: "<REVERSE_STOP>",
 }
 
 func Widths(img image.Image) (widths []int, err error) {
@@ -215,7 +599,7 @@ func Widths(img image.Image) (widths []int, err error) {
 				run++
 			} else {
 				// finish bar run
-				if run != 0 {
+				if run != 0 { // @fixme: check unnecessary
 					widths = append(widths, run/div)
 				}
 				bars = false
@@ -235,7 +619,7 @@ func Reverse(widths []int) (nws []int, rev bool) {
 	nws = widths
 	startSym := widths[1:7]
 	sym := DecodeTableA[startSym[0]][startSym[1]][startSym[2]][startSym[3]][startSym[4]][startSym[5]]
-	if sym == "REVERSE_STOP" {
+	if sym == REVERSE_STOP {
 		rev = true
 		for i, j := 0, len(widths)-1; i < j; i, j = i+1, j-1 {
 			nws[i], nws[j] = nws[j], nws[i]
@@ -252,503 +636,6 @@ func Split(widths []int) (quietStart int, startSym []int, data []int, checkSym [
 	stopPat = widths[len(widths)-8 : len(widths)-1]
 	quietEnd = widths[len(widths)-1]
 	return
-}
-
-var DecodeTableA = [][][][][][]string{
-	1: {
-		1: {
-			1: {
-				3: {
-					4: {
-						1: "GS",
-					},
-				},
-			},
-		},
-		2: {
-			2: {
-				4: {
-					1: {
-						1: "BS",
-					},
-				},
-			},
-		},
-		4: {
-			2: {
-				2: {
-					1: {
-						1: "LF",
-					},
-				},
-			},
-		},
-	},
-	2: {
-		1: {
-			1: {
-				1: {
-					3: {
-						3: "REVERSE_STOP",
-					},
-				},
-				2: {
-					1: {
-						4: "START_B",
-					},
-					3: {
-						2: "START_C",
-					},
-				},
-				4: {
-					1: {
-						2: "START_A",
-					},
-				},
-			},
-			3: {
-				2: {
-					1: {
-						2: "5",
-					},
-				},
-			},
-		},
-		2: {
-			1: {
-				4: {
-					1: {
-						1: "]",
-					},
-				},
-			},
-		},
-		3: {
-			3: {
-				1: {
-					1: {
-						1: "STOP",
-					},
-				},
-			},
-		},
-	},
-	3: {
-		1: {
-			1: {
-				3: {
-					2: {
-						1: "W",
-					},
-				},
-			},
-		},
-	},
-	4: {
-		3: {
-			1: {
-				1: {
-					1: {
-						1: "^",
-					},
-				},
-			},
-		},
-	},
-}
-
-var DecodeTableB = [][][][][][]string{
-	1: {
-		1: {
-			1: {
-				3: {
-					2: {
-						3: "A",
-					},
-				},
-			},
-			2: {
-				1: {
-					3: {
-						3: "J",
-					},
-				},
-				2: {
-					1: {
-						4: "e",
-					},
-					3: {
-						2: ",",
-					},
-				},
-				3: {
-					1: {
-						3: "D",
-					},
-				},
-			},
-			3: {
-				1: {
-					4: {
-						1: "CODE_C",
-					},
-				},
-			},
-		},
-		2: {
-			1: {
-				1: {
-					2: {
-						4: "a",
-					},
-				},
-				2: {
-					4: {
-						1: "r",
-					},
-				},
-				4: {
-					2: {
-						1: "b",
-					},
-				},
-			},
-			2: {
-				1: {
-					3: {
-						2: "-",
-					},
-				},
-				4: {
-					1: {
-						1: "h",
-					},
-				},
-			},
-			3: {
-				2: {
-					2: {
-						1: "1",
-					},
-				},
-			},
-		},
-		3: {
-			1: {
-				1: {
-					2: {
-						3: "B",
-					},
-				},
-				3: {
-					2: {
-						1: "C",
-					},
-				},
-			},
-			4: {
-				1: {
-					1: {
-						1: "o",
-					},
-				},
-			},
-		},
-		4: {
-			1: {
-				1: {
-					2: {
-						2: "c",
-					},
-				},
-				2: {
-					2: {
-						1: "d",
-					},
-				},
-			},
-			2: {
-				1: {
-					1: {
-						2: "i",
-					},
-				},
-			},
-		},
-	},
-	2: {
-		1: {
-			1: {
-				1: {
-					3: {
-						3: "REVERSE_STOP",
-					},
-				},
-				2: {
-					1: {
-						4: "START_B",
-					},
-					3: {
-						2: "START_C",
-					},
-				},
-				4: {
-					1: {
-						2: "START_A",
-					},
-				},
-			},
-			2: {
-				2: {
-					2: {
-						2: " ",
-					},
-				},
-			},
-			4: {
-				1: {
-					2: {
-						1: "z",
-					},
-				},
-			},
-		},
-		2: {
-			1: {
-				1: {
-					1: {
-						4: "l",
-					},
-					3: {
-						2: "3",
-					},
-				},
-				4: {
-					1: {
-						1: "]",
-					},
-				},
-			},
-			2: {
-				1: {
-					2: {
-						2: "!",
-					},
-				},
-			},
-			3: {
-				2: {
-					1: {
-						1: "2",
-					},
-				},
-			},
-		},
-		3: {
-			3: {
-				1: {
-					1: {
-						1: "STOP",
-					},
-				},
-			},
-		},
-	},
-	3: {
-		1: {
-			1: {
-				1: {
-					4: {
-						1: "CODE_A",
-					},
-				},
-				3: {
-					2: {
-						1: "W",
-					},
-				},
-			},
-			3: {
-				1: {
-					2: {
-						1: "P",
-					},
-				},
-			},
-		},
-	},
-	4: {
-		2: {
-			1: {
-				1: {
-					1: {
-						2: "w",
-					},
-				},
-			},
-		},
-	},
-}
-
-var DecodeTableC = [][][][][][]string{
-	1: {
-		1: {
-			2: {
-				2: {
-					3: {
-						2: "12",
-					},
-				},
-			},
-			4: {
-				1: {
-					3: {
-						1: "CODE_B",
-					},
-				},
-			},
-		},
-		2: {
-			1: {
-				4: {
-					2: {
-						1: "66",
-					},
-				},
-			},
-		},
-		3: {
-			1: {
-				1: {
-					2: {
-						3: "34",
-					},
-				},
-			},
-		},
-		4: {
-			2: {
-				1: {
-					1: {
-						2: "73",
-					},
-				},
-			},
-		},
-	},
-	2: {
-		1: {
-			1: {
-				1: {
-					3: {
-						3: "REVERSE_STOP",
-					},
-				},
-				2: {
-					1: {
-						4: "START_B",
-					},
-					3: {
-						2: "START_C",
-					},
-				},
-				4: {
-					1: {
-						2: "START_A",
-					},
-				},
-			},
-			4: {
-				1: {
-					2: {
-						1: "90",
-					},
-				},
-			},
-		},
-		3: {
-			3: {
-				1: {
-					1: {
-						1: "STOP",
-					},
-				},
-			},
-		},
-	},
-	3: {
-		3: {
-			1: {
-				1: {
-					2: {
-						1: "56",
-					},
-				},
-			},
-		},
-	},
-}
-
-var ValueTable = map[string]int{
-	" ":       0,
-	"!":       1,
-	"12":      12,
-	",":       12,
-	"-":       13,
-	"1":       17,
-	"2":       18,
-	"3":       19,
-	"4":       20,
-	"5":       21,
-	"A":       33,
-	"B":       34,
-	"34":      34,
-	"C":       35,
-	"D":       36,
-	"P":       48,
-	"J":       42,
-	"W":       55,
-	"56":      56,
-	"]":       61,
-	"^":       62,
-	"a":       65,
-	"b":       66,
-	"66":      66,
-	"c":       67,
-	"d":       68,
-	"e":       69,
-	"f":       70,
-	"g":       71,
-	"h":       72,
-	"BS":      72,
-	"i":       73,
-	"73":      73,
-	"j":       74,
-	"LF":      74,
-	"k":       75,
-	"l":       76,
-	"m":       77,
-	"n":       78,
-	"o":       79,
-	"p":       80,
-	"q":       81,
-	"r":       82,
-	"s":       83,
-	"t":       84,
-	"u":       85,
-	"v":       86,
-	"w":       87,
-	"x":       88,
-	"y":       89,
-	"z":       90,
-	"90":      90,
-	"GS":      93,
-	"CODE_C":  99,
-	"CODE_B":  100,
-	"CODE_A":  101,
-	"START_A": 103,
-	"START_B": 104,
-	"START_C": 105,
 }
 
 func Decode(img image.Image) (msg string, err error) {
@@ -797,37 +684,32 @@ func Decode(img image.Image) (msg string, err error) {
 
 	staSym := decodeTable[sta[0]][sta[1]][sta[2]][sta[3]][sta[4]][sta[5]]
 	switch staSym {
-	case "START_A":
+	case START_A:
 		decodeTable = DecodeTableA
-	case "START_B":
+	case START_B:
 		decodeTable = DecodeTableB
-	case "START_C":
+	case START_C:
 		decodeTable = DecodeTableC
 	default:
-		return msg, fmt.Errorf("invalid start symbol: %s -- %+v", staSym, sta)
+		return msg, fmt.Errorf("invalid start symbol: %s -- %+v", ASCIITable[staSym], sta)
 	}
 
-	checksum := ValueTable[staSym]
-	fmt.Printf("%s [%d]\n", staSym, checksum)
+	checksum := staSym
 
 	for current < len(d) {
 		sym := decodeTable[d[current-5]][d[current-4]][d[current-3]][d[current-2]][d[current-1]][d[current-0]]
-		val, ok := ValueTable[sym]
-		if !ok {
-			panic(fmt.Sprintf("no value for %s", sym))
-		}
-		checksum += val * posMul
-		fmt.Printf("Sym: %s (%d%d%d%d%d%d) [%d × %d = %d]\n", sym, d[current-5], d[current-4], d[current-3], d[current-2], d[current-1], d[current-0], val, posMul, val*posMul)
+		checksum += sym * posMul
+		fmt.Printf("Sym: %s (%d%d%d%d%d%d) [%d × %d = %d]\n", ASCIITable[sym], d[current-5], d[current-4], d[current-3], d[current-2], d[current-1], d[current-0], sym, posMul, sym*posMul)
 
 		switch sym {
-		case "CODE_A":
+		case CODE_A:
 			decodeTable = DecodeTableA
-		case "CODE_B":
+		case CODE_B:
 			decodeTable = DecodeTableB
-		case "CODE_C":
+		case CODE_C:
 			decodeTable = DecodeTableC
 		default:
-			msg += sym
+			msg += string(ASCIITable[sym])
 		}
 
 		posMul++
@@ -835,10 +717,7 @@ func Decode(img image.Image) (msg string, err error) {
 	}
 
 	checksum = checksum % 103
-	cksmVal, ok := ValueTable[DecodeTableA[c[0]][c[1]][c[2]][c[3]][c[4]][c[5]]]
-	if !ok {
-		panic("checksum missing from value table")
-	}
+	cksmVal := DecodeTableA[c[0]][c[1]][c[2]][c[3]][c[4]][c[5]]
 	cksmOK := cksmVal == checksum
 	fmt.Printf("Checksum: %d (expected: %d, ok: %t)\n", checksum, cksmVal, cksmOK)
 

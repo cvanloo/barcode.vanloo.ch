@@ -21,7 +21,7 @@ func must[T any](t T, e error) T {
 
 func main() {
 	//f := must(os.Open("code128/test_code128.png"))
-	f := must(os.Open("code128/test_code128-rotate.png"))
+	//f := must(os.Open("code128/test_code128-rotate.png"))
 	//f := must(os.Open("code128/test_code128-1.png"))
 	//f := must(os.Open("code128/test_code128-2.png"))
 	//f := must(os.Open("code128/test_code128-3.png"))
@@ -29,6 +29,7 @@ func main() {
 	//f := must(os.Open("code128/test_code128-5.png"))
 	//f := must(os.Open("code128/test_code128-6.png"))
 	//f := must(os.Open("code128/test_code128-7.png"))
+	f := must(os.Open("code128/test_code128-8.png"))
 	img, _, err := image.Decode(f)
 	if err != nil {
 		log.Fatalf("decoding image: %v", err)
