@@ -205,7 +205,7 @@ func Widths(img image.Image) (widths []int, err error) {
 					quietSpaceMissing = true
 				}
 				if run != 0 {
-					widths = append(widths, run / div)
+					widths = append(widths, run/div)
 				}
 				bars = true
 				run = 1
@@ -216,7 +216,7 @@ func Widths(img image.Image) (widths []int, err error) {
 			} else {
 				// finish bar run
 				if run != 0 {
-					widths = append(widths, run / div)
+					widths = append(widths, run/div)
 				}
 				bars = false
 				run = 1
@@ -224,19 +224,32 @@ func Widths(img image.Image) (widths []int, err error) {
 		}
 	}
 	// don't forget to record last run!
-	widths = append(widths, run / div)
+	widths = append(widths, run/div)
 	if quietSpaceMissing {
 		widths = append(widths, 0)
 	}
 	return widths, nil
 }
 
+func Reverse(widths []int) (nws []int, rev bool) {
+	nws = widths
+	startSym := widths[1:7]
+	sym := DecodeTableA[startSym[0]][startSym[1]][startSym[2]][startSym[3]][startSym[4]][startSym[5]]
+	if sym == "REVERSE_STOP" {
+		rev = true
+		for i, j := 0, len(widths)-1; i < j; i, j = i+1, j-1 {
+			nws[i], nws[j] = nws[j], nws[i]
+		}
+	}
+	return
+}
+
 func Split(widths []int) (quietStart int, startSym []int, data []int, checkSym []int, stopPat []int, quietEnd int) {
 	quietStart = widths[0]
 	startSym = widths[1:7]
-	data = widths[7:len(widths)-14]
-	checkSym = widths[len(widths)-14:len(widths)-8]
-	stopPat = widths[len(widths)-8:len(widths)-1]
+	data = widths[7 : len(widths)-14]
+	checkSym = widths[len(widths)-14 : len(widths)-8]
+	stopPat = widths[len(widths)-8 : len(widths)-1]
 	quietEnd = widths[len(widths)-1]
 	return
 }
@@ -677,62 +690,62 @@ var DecodeTableC = [][][][][][]string{
 }
 
 var ValueTable = map[string]int{
-	" ": 0,
-	"!": 1,
-	"12": 12,
-	",": 12,
-	"-": 13,
-	"1": 17,
-	"2": 18,
-	"3": 19,
-	"4": 20,
-	"5": 21,
-	"A": 33,
-	"B": 34,
-	"34": 34,
-	"C": 35,
-	"D": 36,
-	"P": 48,
-	"J": 42,
-	"W": 55,
-	"56": 56,
-	"]": 61,
-	"^": 62,
-	"a": 65,
-	"b": 66,
-	"66": 66,
-	"c": 67,
-	"d": 68,
-	"e": 69,
-	"f": 70,
-	"g": 71,
-	"h": 72,
-	"BS": 72,
-	"i": 73,
-	"73": 73,
-	"j": 74,
-	"LF": 74,
-	"k": 75,
-	"l": 76,
-	"m": 77,
-	"n": 78,
-	"o": 79,
-	"p": 80,
-	"q": 81,
-	"r": 82,
-	"s": 83,
-	"t": 84,
-	"u": 85,
-	"v": 86,
-	"w": 87,
-	"x": 88,
-	"y": 89,
-	"z": 90,
-	"90": 90,
-	"GS": 93,
-	"CODE_C": 99,
-	"CODE_B": 100,
-	"CODE_A": 101,
+	" ":       0,
+	"!":       1,
+	"12":      12,
+	",":       12,
+	"-":       13,
+	"1":       17,
+	"2":       18,
+	"3":       19,
+	"4":       20,
+	"5":       21,
+	"A":       33,
+	"B":       34,
+	"34":      34,
+	"C":       35,
+	"D":       36,
+	"P":       48,
+	"J":       42,
+	"W":       55,
+	"56":      56,
+	"]":       61,
+	"^":       62,
+	"a":       65,
+	"b":       66,
+	"66":      66,
+	"c":       67,
+	"d":       68,
+	"e":       69,
+	"f":       70,
+	"g":       71,
+	"h":       72,
+	"BS":      72,
+	"i":       73,
+	"73":      73,
+	"j":       74,
+	"LF":      74,
+	"k":       75,
+	"l":       76,
+	"m":       77,
+	"n":       78,
+	"o":       79,
+	"p":       80,
+	"q":       81,
+	"r":       82,
+	"s":       83,
+	"t":       84,
+	"u":       85,
+	"v":       86,
+	"w":       87,
+	"x":       88,
+	"y":       89,
+	"z":       90,
+	"90":      90,
+	"GS":      93,
+	"CODE_C":  99,
+	"CODE_B":  100,
+	"CODE_A":  101,
 	"START_A": 103,
 	"START_B": 104,
 	"START_C": 105,
@@ -741,13 +754,19 @@ var ValueTable = map[string]int{
 func Decode(img image.Image) (msg string, err error) {
 	widths, err := Widths(img)
 	if err != nil {
-		return "", err
+		return msg, err
 	}
 	fmt.Printf("%+v\n", widths)
+
+	widths, reversed := Reverse(widths)
+	if reversed {
+		fmt.Println("reading in reverse!")
+	}
+
 	qs, sta, d, c, stp, qe := Split(widths)
 	fmt.Printf("qs: %d\nsta: %+v\nd: %+v\nc: %+v\nstp: %+v\nqe: %d\n", qs, sta, d, c, stp, qe)
 
-	if len(d) % 6 != 0 {
+	if len(d)%6 != 0 {
 		return msg, errors.New("invalid data segment")
 	}
 
@@ -785,7 +804,6 @@ func Decode(img image.Image) (msg string, err error) {
 	case "START_C":
 		decodeTable = DecodeTableC
 	default:
-		// @todo: handle case where we're reading barcode in reverse (right-to-left)
 		return msg, fmt.Errorf("invalid start symbol: %s -- %+v", staSym, sta)
 	}
 
@@ -798,7 +816,7 @@ func Decode(img image.Image) (msg string, err error) {
 		if !ok {
 			panic(fmt.Sprintf("no value for %s", sym))
 		}
-		checksum += val*posMul
+		checksum += val * posMul
 		fmt.Printf("Sym: %s (%d%d%d%d%d%d) [%d × %d = %d]\n", sym, d[current-5], d[current-4], d[current-3], d[current-2], d[current-1], d[current-0], val, posMul, val*posMul)
 
 		switch sym {

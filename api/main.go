@@ -20,7 +20,8 @@ func must[T any](t T, e error) T {
 }
 
 func main() {
-	f := must(os.Open("code128/test_code128.png"))
+	//f := must(os.Open("code128/test_code128.png"))
+	f := must(os.Open("code128/test_code128-rotate.png"))
 	//f := must(os.Open("code128/test_code128-1.png"))
 	//f := must(os.Open("code128/test_code128-2.png"))
 	//f := must(os.Open("code128/test_code128-3.png"))
