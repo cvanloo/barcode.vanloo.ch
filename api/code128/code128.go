@@ -177,6 +177,7 @@ func Widths(img image.Image) (widths []int, err error) {
 	run := 0
 	div := 1
 	divFound := false
+	quietSpaceMissing := false
 	for x := 0; x < img.Bounds().Dx(); x++ {
 		c := img.At(x, 0)
 		r, g, b, _ := c.RGBA()
@@ -185,6 +186,7 @@ func Widths(img image.Image) (widths []int, err error) {
 		if !divFound && len(widths) == 2 {
 			divFound = true
 			div = widths[1] / 2
+
 			fmt.Printf("determined div as %d\n", div)
 
 			// fixup previous runs
@@ -197,8 +199,14 @@ func Widths(img image.Image) (widths []int, err error) {
 				run++
 			} else {
 				// finish space run
-				widths = append(widths, run / div)
-
+				if run == 0 && !divFound {
+					// barcode didn't start with a quiet space!
+					widths = append(widths, 0)
+					quietSpaceMissing = true
+				}
+				if run != 0 {
+					widths = append(widths, run / div)
+				}
 				bars = true
 				run = 1
 			}
@@ -207,8 +215,9 @@ func Widths(img image.Image) (widths []int, err error) {
 				run++
 			} else {
 				// finish bar run
-				widths = append(widths, run / div)
-
+				if run != 0 {
+					widths = append(widths, run / div)
+				}
 				bars = false
 				run = 1
 			}
@@ -216,10 +225,13 @@ func Widths(img image.Image) (widths []int, err error) {
 	}
 	// don't forget to record last run!
 	widths = append(widths, run / div)
+	if quietSpaceMissing {
+		widths = append(widths, 0)
+	}
 	return widths, nil
 }
 
-func Analyse(widths []int) (quietStart int, startSym []int, data []int, checkSym []int, stopPat []int, quietEnd int) {
+func Split(widths []int) (quietStart int, startSym []int, data []int, checkSym []int, stopPat []int, quietEnd int) {
 	quietStart = widths[0]
 	startSym = widths[1:7]
 	data = widths[7:len(widths)-14]
@@ -230,6 +242,35 @@ func Analyse(widths []int) (quietStart int, startSym []int, data []int, checkSym
 }
 
 var DecodeTableA = [][][][][][]string{
+	1: {
+		1: {
+			1: {
+				3: {
+					4: {
+						1: "GS",
+					},
+				},
+			},
+		},
+		2: {
+			2: {
+				4: {
+					1: {
+						1: "BS",
+					},
+				},
+			},
+		},
+		4: {
+			2: {
+				2: {
+					1: {
+						1: "LF",
+					},
+				},
+			},
+		},
+	},
 	2: {
 		1: {
 			1: {
@@ -249,6 +290,22 @@ var DecodeTableA = [][][][][][]string{
 				4: {
 					1: {
 						2: "START_A",
+					},
+				},
+			},
+			3: {
+				2: {
+					1: {
+						2: "5",
+					},
+				},
+			},
+		},
+		2: {
+			1: {
+				4: {
+					1: {
+						1: "]",
 					},
 				},
 			},
@@ -274,6 +331,17 @@ var DecodeTableA = [][][][][][]string{
 			},
 		},
 	},
+	4: {
+		3: {
+			1: {
+				1: {
+					1: {
+						1: "^",
+					},
+				},
+			},
+		},
+	},
 }
 
 var DecodeTableB = [][][][][][]string{
@@ -290,6 +358,14 @@ var DecodeTableB = [][][][][][]string{
 				1: {
 					3: {
 						3: "J",
+					},
+				},
+				2: {
+					1: {
+						4: "e",
+					},
+					3: {
+						2: ",",
 					},
 				},
 				3: {
@@ -313,6 +389,11 @@ var DecodeTableB = [][][][][][]string{
 						4: "a",
 					},
 				},
+				2: {
+					4: {
+						1: "r",
+					},
+				},
 				4: {
 					2: {
 						1: "b",
@@ -323,6 +404,11 @@ var DecodeTableB = [][][][][][]string{
 				1: {
 					3: {
 						2: "-",
+					},
+				},
+				4: {
+					1: {
+						1: "h",
 					},
 				},
 			},
@@ -347,6 +433,13 @@ var DecodeTableB = [][][][][][]string{
 					},
 				},
 			},
+			4: {
+				1: {
+					1: {
+						1: "o",
+					},
+				},
+			},
 		},
 		4: {
 			1: {
@@ -358,6 +451,13 @@ var DecodeTableB = [][][][][][]string{
 				2: {
 					2: {
 						1: "d",
+					},
+				},
+			},
+			2: {
+				1: {
+					1: {
+						2: "i",
 					},
 				},
 			},
@@ -385,10 +485,27 @@ var DecodeTableB = [][][][][][]string{
 					},
 				},
 			},
+			2: {
+				2: {
+					2: {
+						2: " ",
+					},
+				},
+			},
+			4: {
+				1: {
+					2: {
+						1: "z",
+					},
+				},
+			},
 		},
 		2: {
 			1: {
 				1: {
+					1: {
+						4: "l",
+					},
 					3: {
 						2: "3",
 					},
@@ -396,6 +513,13 @@ var DecodeTableB = [][][][][][]string{
 				4: {
 					1: {
 						1: "]",
+					},
+				},
+			},
+			2: {
+				1: {
+					2: {
+						2: "!",
 					},
 				},
 			},
@@ -420,6 +544,11 @@ var DecodeTableB = [][][][][][]string{
 	3: {
 		1: {
 			1: {
+				1: {
+					4: {
+						1: "CODE_A",
+					},
+				},
 				3: {
 					2: {
 						1: "W",
@@ -430,6 +559,17 @@ var DecodeTableB = [][][][][][]string{
 				1: {
 					2: {
 						1: "P",
+					},
+				},
+			},
+		},
+	},
+	4: {
+		2: {
+			1: {
+				1: {
+					1: {
+						2: "w",
 					},
 				},
 			},
@@ -455,11 +595,29 @@ var DecodeTableC = [][][][][][]string{
 				},
 			},
 		},
+		2: {
+			1: {
+				4: {
+					2: {
+						1: "66",
+					},
+				},
+			},
+		},
 		3: {
 			1: {
 				1: {
 					2: {
 						3: "34",
+					},
+				},
+			},
+		},
+		4: {
+			2: {
+				1: {
+					1: {
+						2: "73",
 					},
 				},
 			},
@@ -487,6 +645,13 @@ var DecodeTableC = [][][][][][]string{
 					},
 				},
 			},
+			4: {
+				1: {
+					2: {
+						1: "90",
+					},
+				},
+			},
 		},
 		3: {
 			3: {
@@ -498,29 +663,79 @@ var DecodeTableC = [][][][][][]string{
 			},
 		},
 	},
+	3: {
+		3: {
+			1: {
+				1: {
+					2: {
+						1: "56",
+					},
+				},
+			},
+		},
+	},
 }
 
 var ValueTable = map[string]int{
+	" ": 0,
+	"!": 1,
 	"12": 12,
-	"34": 13,
+	",": 12,
 	"-": 13,
 	"1": 17,
 	"2": 18,
 	"3": 19,
+	"4": 20,
+	"5": 21,
 	"A": 33,
 	"B": 34,
+	"34": 34,
 	"C": 35,
 	"D": 36,
 	"P": 48,
 	"J": 42,
 	"W": 55,
+	"56": 56,
+	"]": 61,
+	"^": 62,
 	"a": 65,
 	"b": 66,
+	"66": 66,
 	"c": 67,
 	"d": 68,
+	"e": 69,
+	"f": 70,
+	"g": 71,
+	"h": 72,
+	"BS": 72,
+	"i": 73,
+	"73": 73,
+	"j": 74,
+	"LF": 74,
+	"k": 75,
+	"l": 76,
+	"m": 77,
+	"n": 78,
+	"o": 79,
+	"p": 80,
+	"q": 81,
+	"r": 82,
+	"s": 83,
+	"t": 84,
+	"u": 85,
+	"v": 86,
+	"w": 87,
+	"x": 88,
+	"y": 89,
+	"z": 90,
+	"90": 90,
+	"GS": 93,
 	"CODE_C": 99,
 	"CODE_B": 100,
+	"CODE_A": 101,
+	"START_A": 103,
 	"START_B": 104,
+	"START_C": 105,
 }
 
 func Decode(img image.Image) (msg string, err error) {
@@ -529,29 +744,19 @@ func Decode(img image.Image) (msg string, err error) {
 		return "", err
 	}
 	fmt.Printf("%+v\n", widths)
-	qs, sta, d, c, stp, qe := Analyse(widths)
+	qs, sta, d, c, stp, qe := Split(widths)
 	fmt.Printf("qs: %d\nsta: %+v\nd: %+v\nc: %+v\nstp: %+v\nqe: %d\n", qs, sta, d, c, stp, qe)
 
-	decodeTable := DecodeTableA
-
-	staSym := decodeTable[sta[0]][sta[1]][sta[2]][sta[3]][sta[4]][sta[5]]
-	switch staSym {
-	case "START_A":
-		decodeTable = DecodeTableA
-	case "START_B":
-		decodeTable = DecodeTableB
-	case "START_C":
-		decodeTable = DecodeTableC
-	default:
-		// @todo: handle case where we're reading barcode in reverse (right-to-left)
-		return msg, fmt.Errorf("invalid start symbol: %s -- %+v", staSym, sta)
+	if len(d) % 6 != 0 {
+		return msg, errors.New("invalid data segment")
 	}
 
-	checksum := ValueTable[staSym]
+	decodeTable := DecodeTableA
 	current, posMul := 5, 1
 
 	defer func() {
 		if r := recover(); r != nil {
+			fmt.Println(r)
 			table := "?"
 			if reflect.ValueOf(decodeTable).Pointer() == reflect.ValueOf(DecodeTableA).Pointer() {
 				table = "A"
@@ -571,9 +776,28 @@ func Decode(img image.Image) (msg string, err error) {
 		}
 	}()
 
+	staSym := decodeTable[sta[0]][sta[1]][sta[2]][sta[3]][sta[4]][sta[5]]
+	switch staSym {
+	case "START_A":
+		decodeTable = DecodeTableA
+	case "START_B":
+		decodeTable = DecodeTableB
+	case "START_C":
+		decodeTable = DecodeTableC
+	default:
+		// @todo: handle case where we're reading barcode in reverse (right-to-left)
+		return msg, fmt.Errorf("invalid start symbol: %s -- %+v", staSym, sta)
+	}
+
+	checksum := ValueTable[staSym]
+	fmt.Printf("%s [%d]\n", staSym, checksum)
+
 	for current < len(d) {
 		sym := decodeTable[d[current-5]][d[current-4]][d[current-3]][d[current-2]][d[current-1]][d[current-0]]
-		val := ValueTable[sym]
+		val, ok := ValueTable[sym]
+		if !ok {
+			panic(fmt.Sprintf("no value for %s", sym))
+		}
 		checksum += val*posMul
 		fmt.Printf("Sym: %s (%d%d%d%d%d%d) [%d × %d = %d]\n", sym, d[current-5], d[current-4], d[current-3], d[current-2], d[current-1], d[current-0], val, posMul, val*posMul)
 
@@ -593,7 +817,10 @@ func Decode(img image.Image) (msg string, err error) {
 	}
 
 	checksum = checksum % 103
-	cksmVal := ValueTable[DecodeTableA[c[0]][c[1]][c[2]][c[3]][c[4]][c[5]]]
+	cksmVal, ok := ValueTable[DecodeTableA[c[0]][c[1]][c[2]][c[3]][c[4]][c[5]]]
+	if !ok {
+		panic("checksum missing from value table")
+	}
 	cksmOK := cksmVal == checksum
 	fmt.Printf("Checksum: %d (expected: %d, ok: %t)\n", checksum, cksmVal, cksmOK)
 
@@ -603,44 +830,6 @@ func Decode(img image.Image) (msg string, err error) {
 
 	return msg, nil
 }
-
-/*
-func Decode(img image.Image) (string, error) {
-	set := false
-	count := 0
-	fmt.Printf("Width: %d\n", img.Bounds().Dx())
-	for x := 0; x < img.Bounds().Dx(); x++ {
-		c := img.At(x, 0)
-
-		r, _, _, _ := c.RGBA()
-		if r == 0x0 {
-			if set {
-				count++
-			} else {
-				fmt.Printf("0 × %d\n", count)
-				count = 1
-				set = true
-			}
-		} else if r == 0xFFFF {
-			if !set {
-				count++
-			} else {
-				fmt.Printf("1 × %d\n", count)
-				count = 1
-				set = false
-			}
-		} else {
-			panic("i don't know how to handle this")
-		}
-	}
-	if set {
-		fmt.Printf("1 × %d\n", count)
-	} else {
-		fmt.Printf("0 × %d\n", count)
-	}
-	return "", errors.New("Not implemented")
-}
-*/
 
 func Encode(text string) (image.Image, error) {
 	return nil, errors.New("Not implemented")
