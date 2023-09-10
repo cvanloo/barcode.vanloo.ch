@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	// character set A
 	SPACE             = 0x00
 	EXCLAMATION       = 0x01
 	DOUBLE_QUOTE      = 0x02
@@ -68,16 +69,85 @@ const (
 	X                 = 0x38
 	Y                 = 0x39
 	Z                 = 0x3a
+	OPEN_BRACKET      = 0x3b
+	BACKSLASH         = 0x3c
+	CLOSE_BRACKET     = 0x3d
+	CARET             = 0x3e
+	UNDERSCORE        = 0x3f
+	NUL               = 0x40
+	SOH               = 0x41
+	STX               = 0x42
+	ETX               = 0x43
+	EOT               = 0x44
 
-	CODE_C = 0x63
-	CODE_B = 0x64
+	ENQ = 0x45
+	ACK = 0x46
+	BEL = 0x47
+	BS  = 0x48
+	HT  = 0x49
+	LF  = 0x4a
+	VT  = 0x4b
+	FF  = 0x4c
+	CR  = 0x4d
+	SO  = 0x4e
+	SI  = 0x4f
+	DLE = 0x50
+
+	DC1     = 0x51
+	DC2     = 0x52
+	DC3     = 0x53
+	DC4     = 0x54
+	NAK     = 0x55
+	SYN     = 0x56
+	ETB     = 0x57
+	CAN     = 0x58
+	EM      = 0x59
+	SUB     = 0x5a
+	ESC     = 0x5b
+	FS      = 0x5c
+	GS      = 0x5d
+	RS      = 0x5e
+	US      = 0x5f
+	FNC_3   = 0x60
+	FNC_2   = 0x61
+	SHIFT_B = 0x62
+	CODE_C  = 0x63
+	CODE_B  = 0x64
+	FNC_4   = 0x65
+	FNC_1   = 0x66
+
+	/*
+		51 	DC1 121142
+		52 	DC2 121241
+		53 	DC3 114212
+		54 	DC4 124112
+		55 	NAK 124211
+		56 	SYN 411212
+		57 	ETB 421112
+		58 	CAN 421211
+		59 	EM 	212141
+		5a 	SUB 214121
+		5b 	ESC 412121
+		5c 	FS 	111143
+		5d 	GS 	111341
+		5e 	RS 	131141
+		5f 	US 	114113
+		60 	FNC 3 114311
+		61 	FNC 2 411113
+		62 	Shift B 411311
+		63 	Code C 113141
+		64 	Code B 114131
+		65 	FNC 4 311141
+		66 	FNC 1 411131
+	*/
+
 	CODE_A = 0x65
 
-	START_A = 0x67
-	START_B = 0x68
-	START_C = 0x69
-	STOP    = 0x6a
-
+	// character set A, B, C
+	START_A      = 0x67
+	START_B      = 0x68
+	START_C      = 0x69
+	STOP         = 0x6a
 	REVERSE_STOP = -1
 )
 
@@ -85,9 +155,22 @@ var DecodeTableA = [][][][][][]int{
 	1: {
 		1: {
 			1: {
+				2: {
+					2: {
+						4: UNDERSCORE,
+					},
+					4: {
+						2: DLE,
+					},
+				},
 				3: {
 					2: {
 						3: A,
+					},
+				},
+				4: {
+					2: {
+						2: NUL,
 					},
 				},
 			},
@@ -98,6 +181,9 @@ var DecodeTableA = [][][][][][]int{
 					},
 				},
 				2: {
+					1: {
+						4: ENQ,
+					},
 					3: {
 						2: COMMA,
 					},
@@ -108,6 +194,11 @@ var DecodeTableA = [][][][][][]int{
 					},
 					3: {
 						1: K,
+					},
+				},
+				4: {
+					1: {
+						2: ACK,
 					},
 				},
 			},
@@ -131,6 +222,11 @@ var DecodeTableA = [][][][][][]int{
 		},
 		2: {
 			1: {
+				1: {
+					2: {
+						4: SOH,
+					},
+				},
 				2: {
 					2: {
 						3: POUND,
@@ -141,9 +237,17 @@ var DecodeTableA = [][][][][][]int{
 						2: DOLLAR,
 					},
 				},
+				4: {
+					2: {
+						1: STX,
+					},
+				},
 			},
 			2: {
 				1: {
+					1: {
+						4: BEL,
+					},
 					3: {
 						2: HYPHEN,
 					},
@@ -159,6 +263,11 @@ var DecodeTableA = [][][][][][]int{
 				3: {
 					1: {
 						2: SINGLE_QUOTE,
+					},
+				},
+				4: {
+					1: {
+						1: BS,
 					},
 				},
 			},
@@ -217,6 +326,39 @@ var DecodeTableA = [][][][][][]int{
 				1: {
 					2: {
 						1: O,
+					},
+				},
+			},
+			4: {
+				1: {
+					1: {
+						1: SI,
+					},
+				},
+			},
+		},
+		4: {
+			1: {
+				2: {
+					2: {
+						1: EOT,
+					},
+				},
+				1: {
+					2: {
+						2: ETX,
+					},
+				},
+			},
+			2: {
+				1: {
+					1: {
+						2: HT,
+					},
+				},
+				2: {
+					1: {
+						1: LF,
 					},
 				},
 			},
@@ -293,6 +435,9 @@ var DecodeTableA = [][][][][][]int{
 		2: {
 			1: {
 				1: {
+					1: {
+						4: FF,
+					},
 					3: {
 						2: THREE,
 					},
@@ -308,6 +453,11 @@ var DecodeTableA = [][][][][][]int{
 				3: {
 					1: {
 						2: ASTERISK,
+					},
+				},
+				4: {
+					1: {
+						1: CLOSE_BRACKET,
 					},
 				},
 			},
@@ -365,6 +515,20 @@ var DecodeTableA = [][][][][][]int{
 				},
 			},
 		},
+		4: {
+			1: {
+				1: {
+					1: {
+						2: SO,
+					},
+				},
+				2: {
+					1: {
+						1: VT,
+					},
+				},
+			},
+		},
 	},
 	3: {
 		1: {
@@ -412,6 +576,13 @@ var DecodeTableA = [][][][][][]int{
 					},
 				},
 			},
+			4: {
+				1: {
+					1: {
+						1: BACKSLASH,
+					},
+				},
+			},
 		},
 		2: {
 			1: {
@@ -444,6 +615,33 @@ var DecodeTableA = [][][][][][]int{
 				1: {
 					2: {
 						1: X,
+					},
+				},
+			},
+			2: {
+				1: {
+					1: {
+						1: OPEN_BRACKET,
+					},
+				},
+			},
+		},
+	},
+	4: {
+		1: {
+			3: {
+				1: {
+					1: {
+						1: CR,
+					},
+				},
+			},
+		},
+		3: {
+			1: {
+				1: {
+					1: {
+						1: CARET,
 					},
 				},
 			},
@@ -698,6 +896,28 @@ var ASCIITable = map[int]string{
 	X:                 "X",
 	Y:                 "Y",
 	Z:                 "Z",
+	OPEN_BRACKET:      "[",
+	BACKSLASH:         `\`,
+	CLOSE_BRACKET:     "]",
+	CARET:             "^",
+	UNDERSCORE:        "_",
+	NUL:               "<NUL>",
+	SOH:               "<SOH>",
+	STX:               "<STX>",
+	ETX:               "<ETX>",
+	EOT:               "<EOT>",
+	ENQ: "<ENQ>",
+	ACK: "<ACK>",
+	BEL: "<BEL>",
+	BS:  "<BS>",
+	HT:  "<HT>",
+	LF:  "<LF>",
+	VT:  "<VT>",
+	FF:  "<FF>",
+	CR:  "<CR>",
+	SO:  "<SO>",
+	SI:  "<SI>",
+	DLE: "<DLE>",
 
 	CODE_C: "<CODE_C>",
 	CODE_B: "<CODE_B>",
