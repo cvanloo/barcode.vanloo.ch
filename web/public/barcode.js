@@ -3,6 +3,7 @@ import 'api/storage'
 let _onBarcodesUpdate = () => {}
 let _barcodes = []
 let _moveAction = null;
+let _deleteAction = null;
 
 function renderFunc(fun) {
     _onBarcodesUpdate = fun
@@ -23,43 +24,45 @@ function _render(id, barcode) {
     const div = document.createElement('div')
     div.classList.add('barcode')
 
-    const btn_move = document.createElement('button')
-    btn_move.type = "button"
-    if (_moveAction === null) {
-        btn_move.innerHTML = "Move"
-        btn_move.onclick = () => {
+   // const btn_move = document.createElement('button')
+    //btn_move.type = "button"
+    //btn_move.innerHTML = "Move"
+    div.onmousedown = (e) => {
+        e.preventDefault()
+        if (e.buttons === 1) {
             _moveAction = {}
             _moveAction.from = id
-            _onBarcodesUpdate()
+        } else if (e.buttons === 4) {
+            _deleteAction = { id: id }
         }
-    } else if (_moveAction.from === id) {
-        btn_move.innerHTML = "Stop"
-        btn_move.onclick = () => {
+    }
+    div.onmouseup = () => {
+        if (_moveAction !== null && _moveAction.from !== id) {
+            _moveAction.to = id
+            move(_moveAction)
             _moveAction = null
-            _onBarcodesUpdate()
+        } else if (_deleteAction !== null && _deleteAction.id === id) {
+            remove(id)
+            _deleteAction = null
         }
-    } else {
-        btn_move.innerHTML = "Here"
-        btn_move.onclick = () => {
-            move((_moveAction.to = id, _moveAction))
-            _moveAction = null
+    }
+    /*
+    div.onmouseover = () => {
+        console.log(id, barcode.text, "mouseover")
+        if (_moveAction !== null && _moveAction.from !== id) {
+            _moveAction.to = id
+            move(_moveAction)
             _onBarcodesUpdate()
         }
     }
+    */
 
     const name_tag = document.createElement('p')
     name_tag.innerHTML = barcode.name
 
-    const btn_close = document.createElement('button')
-    btn_close.type = "button"
-    btn_close.innerHTML = "Close"
-    btn_close.onclick = () => remove(id)
-
     const top_bar = document.createElement('div')
     top_bar.id = "bc-top-bar"
-    top_bar.appendChild(btn_move)
     top_bar.appendChild(name_tag)
-    top_bar.appendChild(btn_close)
     div.appendChild(top_bar)
 
     const img = new Image(312, 80)
