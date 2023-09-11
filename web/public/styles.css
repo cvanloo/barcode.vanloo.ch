@@ -176,11 +176,9 @@ input[type="text"] {
     width: -moz-available;
     width: -webkit-fill-available;
     width: stretch;
-}
-
-.barcode #bc-top-bar {
     display: flex;
     flex-direction: row;
+    justify-content: center;
 }
 
 .barcode #bc-top-bar button {
@@ -189,8 +187,7 @@ input[type="text"] {
 }
 
 .barcode #bc-top-bar p {
-    text-align: center;
-    flex: 4;
+    width: fit-content;
 }
 
 .barcode img {

@@ -2,7 +2,8 @@ import 'api/storage'
 
 let _onBarcodesUpdate = () => {}
 let _barcodes = []
-let _moveAction = null;
+let _moveTarget = null;
+let _deleteTarget = null;
 
 function renderFunc(fun) {
     _onBarcodesUpdate = fun
@@ -18,48 +19,17 @@ function renderOnto(div) {
  * barcode = { name; url; text; }
  */
 function _render(id, barcode) {
-    // Order matters!
+    barcode.id = id
 
     const div = document.createElement('div')
     div.classList.add('barcode')
 
-    const btn_move = document.createElement('button')
-    btn_move.type = "button"
-    if (_moveAction === null) {
-        btn_move.innerHTML = "Move"
-        btn_move.onclick = () => {
-            _moveAction = {}
-            _moveAction.from = id
-            _onBarcodesUpdate()
-        }
-    } else if (_moveAction.from === id) {
-        btn_move.innerHTML = "Stop"
-        btn_move.onclick = () => {
-            _moveAction = null
-            _onBarcodesUpdate()
-        }
-    } else {
-        btn_move.innerHTML = "Here"
-        btn_move.onclick = () => {
-            move((_moveAction.to = id, _moveAction))
-            _moveAction = null
-            _onBarcodesUpdate()
-        }
-    }
-
     const name_tag = document.createElement('p')
     name_tag.innerHTML = barcode.name
 
-    const btn_close = document.createElement('button')
-    btn_close.type = "button"
-    btn_close.innerHTML = "Close"
-    btn_close.onclick = () => remove(id)
-
     const top_bar = document.createElement('div')
-    top_bar.id = "bc-top-bar"
-    top_bar.appendChild(btn_move)
+    top_bar.id = 'bc-top-bar'
     top_bar.appendChild(name_tag)
-    top_bar.appendChild(btn_close)
     div.appendChild(top_bar)
 
     const img = new Image(312, 80)
@@ -69,6 +39,28 @@ function _render(id, barcode) {
     const text_tag = document.createElement('p')
     text_tag.innerHTML = barcode.text
     div.appendChild(text_tag)
+
+    div.onmousedown = (e) => {
+        if ([name_tag, text_tag, img].includes(e.target)) return // click must be made on outer div, not its contents
+        e.preventDefault()                                       // prevent text selection
+        switch (e.buttons) {
+            case 1: _moveTarget = barcode; break
+            case 4: _deleteTarget = barcode; break
+        }
+    }
+    div.onmouseover = () => {
+        if (_moveTarget !== null && _moveTarget !== barcode) {
+            move(_moveTarget.id, id)
+        }
+    }
+    div.onmouseup = () => {
+        if (_moveTarget !== null && _moveTarget !== barcode) {
+            move(_moveTarget.id, id)
+        } else if (_deleteTarget === barcode) {
+            remove(id)
+        }
+        _deleteTarget = _moveTarget = null
+    }
 
     return div
 }
@@ -88,8 +80,8 @@ function remove(id) {
     _onBarcodesUpdate()
 }
 
-function move(moveAction) {
-    _barcodes.splice(moveAction.to, 0, _barcodes.splice(moveAction.from, 1)[0])
+function move(from, to) {
+    _barcodes.splice(to, 0, _barcodes.splice(from, 1)[0])
     localStorage.setObject(sessionStorage.getSession(), _barcodes)
     _onBarcodesUpdate()
 }
