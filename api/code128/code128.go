@@ -2302,9 +2302,9 @@ func modules(img image.Image) (widths []int, err error) {
 
 		if !divFound && len(widths) == 2 {
 			divFound = true
-			div = widths[1] / 2 // start symbol must start with 2-wide module
 
-			fmt.Printf("determined div as %d\n", div)
+			// start symbol must start with 2-wide module
+			div = widths[1] / 2
 
 			// fixup previous runs
 			widths[0] = widths[0] / div
@@ -2369,15 +2369,10 @@ func Decode(img image.Image) (msg string, err error) {
 	if err != nil {
 		return msg, err
 	}
-	fmt.Printf("%+v\n", widths)
 
-	reversed := reverse(widths)
-	if reversed {
-		fmt.Println("reading in reverse!")
-	}
-
+	_ = reverse(widths)
 	qs, sta, d, c, stp, qe := segments(widths)
-	fmt.Printf("qs: %d\nsta: %+v\nd: %+v\nc: %+v\nstp: %+v\nqe: %d\n", qs, sta, d, c, stp, qe)
+	_, _, _ = qs, qe, stp
 
 	if len(d)%6 != 0 {
 		return msg, errors.New("invalid data segment")
@@ -2389,7 +2384,6 @@ func Decode(img image.Image) (msg string, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(r)
 			table := "?"
 			if reflect.ValueOf(decodeTable).Pointer() == reflect.ValueOf(DecodeTableA).Pointer() {
 				table = "A"
@@ -2400,17 +2394,18 @@ func Decode(img image.Image) (msg string, err error) {
 			if reflect.ValueOf(decodeTable).Pointer() == reflect.ValueOf(DecodeTableC).Pointer() {
 				table = "C"
 			}
-			fmt.Printf("(Table %s) Unable to parse sequence:", table)
+			seq := ""
 			for i := -5; current+i < len(d) && i <= 0; i++ {
-				fmt.Printf(" %d", d[current+i])
+				seq += fmt.Sprintf("%d", d[current+i])
 			}
-			fmt.Println()
-			fmt.Printf("More: %+v\n", d[current+1:])
+			err = fmt.Errorf("table %s: invalid sequence: %s", table, seq)
 		}
 	}()
 
 	staSym := decodeTable[sta[0]][sta[1]][sta[2]][sta[3]][sta[4]][sta[5]]
 	switch staSym {
+	default:
+		return msg, fmt.Errorf("invalid start symbol: %s -- %+v", charTable[staSym], sta)
 	case START_A:
 		decodeTable = DecodeTableA
 		charTable = CharTableA
@@ -2420,19 +2415,17 @@ func Decode(img image.Image) (msg string, err error) {
 	case START_C:
 		decodeTable = DecodeTableC
 		charTable = CharTableC
-	default:
-		return msg, fmt.Errorf("invalid start symbol: %s -- %+v", charTable[staSym], sta)
 	}
 
 	checksum := staSym
-	fmt.Printf("Start Sym: %s\n", charTable[staSym])
 
 	for current < len(d) {
 		sym := decodeTable[d[current-5]][d[current-4]][d[current-3]][d[current-2]][d[current-1]][d[current-0]]
 		checksum += sym * posMul
-		fmt.Printf("Sym: %s (%d%d%d%d%d%d) [%d × %d = %d]\n", charTable[sym], d[current-5], d[current-4], d[current-3], d[current-2], d[current-1], d[current-0], sym, posMul, sym*posMul)
 
 		switch sym {
+		default:
+			msg += string(charTable[sym])
 		case CODE_A:
 			decodeTable = DecodeTableA
 			charTable = CharTableA
@@ -2442,8 +2435,16 @@ func Decode(img image.Image) (msg string, err error) {
 		case CODE_C:
 			decodeTable = DecodeTableC
 			charTable = CharTableC
-		default:
-			msg += string(charTable[sym])
+		case FNC3:
+		case FNC2:
+		case SHIFT_B:
+		case FNC1:
+		case START_A:
+		case START_B:
+		case START_C:
+		case STOP:
+		case REVERSE_STOP:
+			return msg, fmt.Errorf("symbol %+v (%s) invalid in this position", sym, charTable[sym])
 		}
 
 		posMul++
@@ -2453,8 +2454,6 @@ func Decode(img image.Image) (msg string, err error) {
 	checksum = checksum % 103
 	cksmVal := DecodeTableA[c[0]][c[1]][c[2]][c[3]][c[4]][c[5]]
 	cksmOK := cksmVal == checksum
-	fmt.Printf("Checksum: %d (expected: %d, ok: %t)\n", checksum, cksmVal, cksmOK)
-
 	if !cksmOK {
 		return msg, fmt.Errorf("invalid checksum: want: %d, got: %d", cksmVal, checksum)
 	}
