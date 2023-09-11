@@ -29,27 +29,23 @@ function _render(id, barcode) {
         if (e.buttons === 1) {
             _moveAction = {from: barcode}
         } else if (e.buttons === 4) {
-            _deleteAction = { id: id }
+            _deleteAction = { barcode: id }
         }
     }
     div.onmouseover = () => {
         if (_moveAction !== null && _moveAction.from !== barcode) {
-            if (_moveAction.last !== barcode) {
-                console.log("in")
-                _moveAction.last = _moveAction.to = barcode
-                move(_moveAction.from.id, _moveAction.to.id)
-            }
+            move(_moveAction.from.id, barcode.id)
         }
     }
     div.onmouseup = () => {
         if (_moveAction !== null && _moveAction.from !== barcode) {
             _moveAction.to = barcode
             move(_moveAction.from.id, _moveAction.to.id)
-            _moveAction = null
         } else if (_deleteAction !== null && _deleteAction.barcode === id) {
             remove(id)
-            _deleteAction = null
         }
+        _moveAction = null
+        _deleteAction = null
     }
 
     const name_tag = document.createElement('p')
