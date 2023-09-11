@@ -19,43 +19,38 @@ function renderOnto(div) {
  * barcode = { name; url; text; }
  */
 function _render(id, barcode) {
-    // Order matters!
+    barcode.id = id
 
     const div = document.createElement('div')
     div.classList.add('barcode')
 
-   // const btn_move = document.createElement('button')
-    //btn_move.type = "button"
-    //btn_move.innerHTML = "Move"
     div.onmousedown = (e) => {
         e.preventDefault()
         if (e.buttons === 1) {
-            _moveAction = {}
-            _moveAction.from = id
+            _moveAction = {from: barcode}
         } else if (e.buttons === 4) {
             _deleteAction = { id: id }
         }
     }
+    div.onmouseover = () => {
+        if (_moveAction !== null && _moveAction.from !== barcode) {
+            if (_moveAction.last !== barcode) {
+                console.log("in")
+                _moveAction.last = _moveAction.to = barcode
+                move(_moveAction.from.id, _moveAction.to.id)
+            }
+        }
+    }
     div.onmouseup = () => {
-        if (_moveAction !== null && _moveAction.from !== id) {
-            _moveAction.to = id
-            move(_moveAction)
+        if (_moveAction !== null && _moveAction.from !== barcode) {
+            _moveAction.to = barcode
+            move(_moveAction.from.id, _moveAction.to.id)
             _moveAction = null
-        } else if (_deleteAction !== null && _deleteAction.id === id) {
+        } else if (_deleteAction !== null && _deleteAction.barcode === id) {
             remove(id)
             _deleteAction = null
         }
     }
-    /*
-    div.onmouseover = () => {
-        console.log(id, barcode.text, "mouseover")
-        if (_moveAction !== null && _moveAction.from !== id) {
-            _moveAction.to = id
-            move(_moveAction)
-            _onBarcodesUpdate()
-        }
-    }
-    */
 
     const name_tag = document.createElement('p')
     name_tag.innerHTML = barcode.name
@@ -91,8 +86,8 @@ function remove(id) {
     _onBarcodesUpdate()
 }
 
-function move(moveAction) {
-    _barcodes.splice(moveAction.to, 0, _barcodes.splice(moveAction.from, 1)[0])
+function move(from, to) {
+    _barcodes.splice(to, 0, _barcodes.splice(from, 1)[0])
     localStorage.setObject(sessionStorage.getSession(), _barcodes)
     _onBarcodesUpdate()
 }
