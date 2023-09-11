@@ -5,11 +5,11 @@ package main
 import (
 	"fmt"
 	"image"
-	_ "image/png"
+	_ "image/png" // imported for side-effects
 	"log"
 	"os"
 
-	"framagit.org/miya/barcode.vanloo.ch/api/code128"
+	"github.com/cvanloo/barcode"
 )
 
 func must[T any](t T, e error) T {
@@ -22,6 +22,7 @@ func must[T any](t T, e error) T {
 func main() {
 	//f := must(os.Open("code128/test_code128.png"))
 	//f := must(os.Open("code128/test_code128-rotate.png"))
+	f := must(os.Open("/mnt/c/Users/cvanloo/Downloads/Unbenannt.png"))
 	//f := must(os.Open("code128/test_code128-1.png"))
 	//f := must(os.Open("code128/test_code128-2.png"))
 	//f := must(os.Open("code128/test_code128-3.png"))
@@ -29,12 +30,12 @@ func main() {
 	//f := must(os.Open("code128/test_code128-5.png"))
 	//f := must(os.Open("code128/test_code128-6.png"))
 	//f := must(os.Open("code128/test_code128-7.png"))
-	f := must(os.Open("code128/test_code128-8.png"))
+	//f := must(os.Open("code128/test_code128-8.png"))
 	img, _, err := image.Decode(f)
 	if err != nil {
 		log.Fatalf("decoding image: %v", err)
 	}
-	fmt.Println(must(code128.Decode(img)))
+	fmt.Printf("%s\n", string(must(barcode.Code128.Decode(img))))
 }
 
 /*
@@ -56,7 +57,7 @@ func main2() {
 		}, /*{
 			Value: "gs1-128",
 			Name:  "GS1-128",
-		}*//*}
+		}*/ /*}
 
 		bs, err := json.Marshal(supported)
 		if err != nil {
