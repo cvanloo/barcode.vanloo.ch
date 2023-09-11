@@ -38,12 +38,11 @@ func main() {
 	fmt.Printf("%s\n", string(must(barcode.Code128.Decode(img))))
 }
 
-/*
-func main2() {
+func main() {
 	mux := http.NewServeMux()
 
-	enableCORS := func(w *http.ResponseWriter) {
-		(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	enableCORS := func(w http.ResponseWriter) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 	}
 
 	mux.HandleFunc("/api/supported_types", func(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +56,7 @@ func main2() {
 		}, /*{
 			Value: "gs1-128",
 			Name:  "GS1-128",
-		}*/ /*}
+		}*/}
 
 		bs, err := json.Marshal(supported)
 		if err != nil {
@@ -76,13 +75,13 @@ func main2() {
 		text := r.Form.Get("text")
 		fmt.Printf("type: %s, text: %s\n", bc, text)
 
-		b, err := code128.Encode(text)
+		bs, err := barcode.Code128.Encode([]byte(text))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		bs, err := barcode.Scale(b, 312, 80)
+		bs, err := barcode.Scale(bs, 312, 80)
 
 		err = png.Encode(w, bs)
 		if err != nil {
@@ -96,4 +95,3 @@ func main2() {
 	fmt.Println("Listening and serving on :8080")
 	http.ListenAndServe(":8080", mux)
 }
-*/
