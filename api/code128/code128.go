@@ -2017,20 +2017,20 @@ var CharTableA = map[int]string{
 	CLOSE_BRACKET:     "]",
 	CARET:             "^",
 	UNDERSCORE:        "_",
-	NUL:               "<NUL>",
+	NUL:               "\000",
 	SOH:               "<SOH>",
 	STX:               "<STX>",
 	ETX:               "<ETX>",
 	EOT:               "<EOT>",
 	ENQ:               "<ENQ>",
 	ACK:               "<ACK>",
-	BEL:               "<BEL>",
-	BS:                "<BS>",
-	HT:                "<HT>",
-	LF:                "<LF>",
-	VT:                "<VT>",
-	FF:                "<FF>",
-	CR:                "<CR>",
+	BEL:               "\a",
+	BS:                "\b",
+	HT:                "\t",
+	LF:                "\n",
+	VT:                "\v",
+	FF:                "\f",
+	CR:                "\r",
 	SO:                "<SO>",
 	SI:                "<SI>",
 	DLE:               "<DLE>",
@@ -2285,20 +2285,24 @@ var CharTableC = map[int]string{
 	REVERSE_STOP: "<REVERSE_STOP>",
 }
 
-func Widths(img image.Image) (widths []int, err error) {
-	bars := false
-	run := 0
-	div := 1
-	divFound := false
-	quietSpaceMissing := false
+func modules(img image.Image) (widths []int, err error) {
+	var (
+		isBar             = false // bar or space; start out expecting spaces (quiet zone)
+		run               = 0     // length of current bar or space
+		div               = 1     // divisor to normalize module widths
+		divFound          = false // has the divisor been determined yet?
+		quietSpaceMissing = false // many barcodes ignore the spec and omit quiet space
+	)
 	for x := 0; x < img.Bounds().Dx(); x++ {
 		c := img.At(x, 0)
 		r, g, b, _ := c.RGBA()
 		_, _ = g, b
+		// r g b
+		//l := (r + g + b) / ??
 
 		if !divFound && len(widths) == 2 {
 			divFound = true
-			div = widths[1] / 2
+			div = widths[1] / 2 // start symbol must start with 2-wide module
 
 			fmt.Printf("determined div as %d\n", div)
 
@@ -2307,35 +2311,29 @@ func Widths(img image.Image) (widths []int, err error) {
 			widths[1] = widths[1] / div
 		}
 
-		if r == 0x0000 {
-			if bars {
+		if r == 0x0000 { // bar
+			if isBar {
 				run++
-			} else {
-				// finish space run
-				if run == 0 && !divFound {
+			} else { // new bar run begins; finish space run
+				if run == 0 {
 					// barcode didn't start with a quiet space!
-					widths = append(widths, 0)
 					quietSpaceMissing = true
 				}
-				if run != 0 {
-					widths = append(widths, run/div)
-				}
-				bars = true
+				widths = append(widths, run/div)
+				isBar = true
 				run = 1
 			}
-		} else if r == 0xFFFF {
-			if !bars {
+		} else if r == 0xFFFF { // space
+			if !isBar {
 				run++
-			} else {
-				// finish bar run
-				if run != 0 { // @fixme: check unnecessary
-					widths = append(widths, run/div)
-				}
-				bars = false
+			} else { // new space run begins; finish bar run
+				widths = append(widths, run/div)
+				isBar = false
 				run = 1
 			}
 		}
 	}
+
 	// don't forget to record last run!
 	widths = append(widths, run/div)
 	if quietSpaceMissing {
@@ -2344,20 +2342,19 @@ func Widths(img image.Image) (widths []int, err error) {
 	return widths, nil
 }
 
-func Reverse(widths []int) (nws []int, rev bool) {
-	nws = widths
+func reverse(widths []int) (isReversed bool) {
 	startSym := widths[1:7]
 	sym := DecodeTableA[startSym[0]][startSym[1]][startSym[2]][startSym[3]][startSym[4]][startSym[5]]
 	if sym == REVERSE_STOP {
-		rev = true
+		isReversed = true
 		for i, j := 0, len(widths)-1; i < j; i, j = i+1, j-1 {
-			nws[i], nws[j] = nws[j], nws[i]
+			widths[i], widths[j] = widths[j], widths[i]
 		}
 	}
 	return
 }
 
-func Split(widths []int) (quietStart int, startSym []int, data []int, checkSym []int, stopPat []int, quietEnd int) {
+func segments(widths []int) (quietStart int, startSym []int, data []int, checkSym []int, stopPat []int, quietEnd int) {
 	quietStart = widths[0]
 	startSym = widths[1:7]
 	data = widths[7 : len(widths)-14]
@@ -2368,18 +2365,18 @@ func Split(widths []int) (quietStart int, startSym []int, data []int, checkSym [
 }
 
 func Decode(img image.Image) (msg string, err error) {
-	widths, err := Widths(img)
+	widths, err := modules(img)
 	if err != nil {
 		return msg, err
 	}
 	fmt.Printf("%+v\n", widths)
 
-	widths, reversed := Reverse(widths)
+	reversed := reverse(widths)
 	if reversed {
 		fmt.Println("reading in reverse!")
 	}
 
-	qs, sta, d, c, stp, qe := Split(widths)
+	qs, sta, d, c, stp, qe := segments(widths)
 	fmt.Printf("qs: %d\nsta: %+v\nd: %+v\nc: %+v\nstp: %+v\nqe: %d\n", qs, sta, d, c, stp, qe)
 
 	if len(d)%6 != 0 {
@@ -2428,6 +2425,7 @@ func Decode(img image.Image) (msg string, err error) {
 	}
 
 	checksum := staSym
+	fmt.Printf("Start Sym: %s\n", charTable[staSym])
 
 	for current < len(d) {
 		sym := decodeTable[d[current-5]][d[current-4]][d[current-3]][d[current-2]][d[current-1]][d[current-0]]
@@ -2437,10 +2435,13 @@ func Decode(img image.Image) (msg string, err error) {
 		switch sym {
 		case CODE_A:
 			decodeTable = DecodeTableA
+			charTable = CharTableA
 		case CODE_B:
 			decodeTable = DecodeTableB
+			charTable = CharTableB
 		case CODE_C:
 			decodeTable = DecodeTableC
+			charTable = CharTableC
 		default:
 			msg += string(charTable[sym])
 		}
