@@ -2,8 +2,8 @@ import 'api/storage'
 
 let _onBarcodesUpdate = () => {}
 let _barcodes = []
-let _moveAction = null;
-let _deleteAction = null;
+let _moveTarget = null;
+let _deleteTarget = null;
 
 function renderFunc(fun) {
     _onBarcodesUpdate = fun
@@ -24,35 +24,11 @@ function _render(id, barcode) {
     const div = document.createElement('div')
     div.classList.add('barcode')
 
-    div.onmousedown = (e) => {
-        e.preventDefault()
-        if (e.buttons === 1) {
-            _moveAction = {from: barcode}
-        } else if (e.buttons === 4) {
-            _deleteAction = { barcode: id }
-        }
-    }
-    div.onmouseover = () => {
-        if (_moveAction !== null && _moveAction.from !== barcode) {
-            move(_moveAction.from.id, barcode.id)
-        }
-    }
-    div.onmouseup = () => {
-        if (_moveAction !== null && _moveAction.from !== barcode) {
-            _moveAction.to = barcode
-            move(_moveAction.from.id, _moveAction.to.id)
-        } else if (_deleteAction !== null && _deleteAction.barcode === id) {
-            remove(id)
-        }
-        _moveAction = null
-        _deleteAction = null
-    }
-
     const name_tag = document.createElement('p')
     name_tag.innerHTML = barcode.name
 
     const top_bar = document.createElement('div')
-    top_bar.id = "bc-top-bar"
+    top_bar.id = 'bc-top-bar'
     top_bar.appendChild(name_tag)
     div.appendChild(top_bar)
 
@@ -63,6 +39,28 @@ function _render(id, barcode) {
     const text_tag = document.createElement('p')
     text_tag.innerHTML = barcode.text
     div.appendChild(text_tag)
+
+    div.onmousedown = (e) => {
+        if ([name_tag, text_tag, img].includes(e.target)) return // click must be made on outer div, not its contents
+        e.preventDefault()                                       // prevent text selection
+        switch (e.buttons) {
+            case 1: _moveTarget = barcode; break
+            case 4: _deleteTarget = barcode; break
+        }
+    }
+    div.onmouseover = () => {
+        if (_moveTarget !== null && _moveTarget !== barcode) {
+            move(_moveTarget.id, id)
+        }
+    }
+    div.onmouseup = () => {
+        if (_moveTarget !== null && _moveTarget !== barcode) {
+            move(_moveTarget.id, id)
+        } else if (_deleteTarget === barcode) {
+            remove(id)
+        }
+        _deleteTarget = _moveTarget = null
+    }
 
     return div
 }
