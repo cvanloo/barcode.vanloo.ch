@@ -116,13 +116,12 @@ input[type="text"] {
 }
 
 #scratch-pad {
-    flex: 3;
+    flex: 1;
 
     display: flex;
     flex-flow: wrap;
     align-content: flex-start;
 
-    height: 85vh;
     overflow: scroll;
 }
 
@@ -199,4 +198,23 @@ input[type="text"] {
     margin: 0;
     height: 40px;
     line-height: 40px
+}
+
+#main-container {
+    flex: 3;
+    height: 85vh;
+
+    display: flex;
+    flex-direction: column;
+}
+
+#help-box {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 1em;
+}
+
+#help-box p {
+    margin: 0 5em;
 }
