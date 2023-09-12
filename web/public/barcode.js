@@ -6,8 +6,17 @@ let _moveTarget = null;
 let _deleteTarget = null;
 
 document.addEventListener('mouseup', () => {
-    _deleteTarget = _moveTarget = null
-    _onBarcodesUpdate()
+    let refresh = false
+    if (_deleteTarget !== null) {
+        _deleteTarget = null
+        refresh = true
+    }
+    if (_moveTarget !== null) {
+        _moveTarget = null
+        refresh = true
+    }
+
+    if (refresh) _onBarcodesUpdate()
 })
 
 /* fun = (e) => { ... }
@@ -68,7 +77,7 @@ function _render(id, barcode) {
         } else if (_deleteTarget === barcode) {
             remove(id)
         }
-        _deleteTarget = _moveTarget = null
+        //_deleteTarget = _moveTarget = null
     }
 
     if (_moveTarget === barcode) {
