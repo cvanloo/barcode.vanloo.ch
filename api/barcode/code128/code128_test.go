@@ -23,6 +23,8 @@ func TestDecode(t *testing.T) {
 		// Dirty images
 		{"testfiles/ClearCutGray.png", "hello"},
 		{"testfiles/ClearCutDither.png", "hello"},
+		{"testfiles/ClearCutBlackAround.png", "hello"},
+		{"testfiles/ClearCutWhiteAround.png", "hello"},
 	}
 	code128 := Code128{}
 	for _, c := range cases {

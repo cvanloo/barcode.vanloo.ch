@@ -127,9 +127,19 @@ func modules(img image.Image) (widths []int, err error) {
 		quietSpaceMissing = false // many barcodes ignore the spec and omit quiet space
 	)
 	for x := 0; x < img.Bounds().Dx(); x++ {
-		c := img.At(x, 0)
-		r, g, b, _ := c.RGBA()
-		l := float64(r + g + b) / 0x2FFFD // 0xFFFF * 3 = 0x2FFFD
+		l := 0.0
+		for y := 0; y < img.Bounds().Dy(); y++ {
+			c := img.At(x, y)
+			r, g, b, _ := c.RGBA()
+			v := float64(r+g+b) / 0x2FFFD // 0xFFFF * 3 = 0x2FFFD
+
+			// calculate incremental average
+			// v/1.1 -- add a bias towards lower values
+			// @todo: use something better: https://stackoverflow.com/questions/48395434/how-to-crop-or-remove-white-background-from-an-image
+			//   https://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/alg.html
+			//   https://en.wikipedia.org/wiki/Edge_detection
+			l = l + (v/1.1-l)/float64(y+1)
+		}
 
 		if !divFound && len(widths) == 2 {
 			divFound = true
