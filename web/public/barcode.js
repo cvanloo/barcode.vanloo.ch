@@ -29,9 +29,6 @@ function renderOnto(div) {
 function _render(id, barcode) {
     barcode.id = id
 
-    const outer = document.createElement('div')
-    outer.classList.add('outer-barcode')
-
     const div = document.createElement('div')
     div.classList.add('barcode')
 
@@ -80,8 +77,7 @@ function _render(id, barcode) {
         div.classList.add('delete-target')
     }
 
-    outer.appendChild(div)
-    return outer
+    return div
 }
 
 /* Add a barcode
