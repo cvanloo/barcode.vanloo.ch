@@ -218,3 +218,13 @@ input[type="text"] {
 #help-box p {
     margin: 0 5em;
 }
+
+.move-target {
+    box-shadow: 50px 50px 4px 5px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+}
+
+.delete-target {
+    box-shadow: 50px 50px 4px 5px rgba(255, 0, 0, 0.2);
+    z-index: 5;
+}

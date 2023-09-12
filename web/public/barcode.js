@@ -5,6 +5,11 @@ let _barcodes = []
 let _moveTarget = null;
 let _deleteTarget = null;
 
+document.addEventListener('mouseup', () => {
+    _deleteTarget = _moveTarget = null
+    _onBarcodesUpdate()
+})
+
 /* fun = (e) => { ... }
  * e is the function that caused the update (e.g., add, move, remove, or loadSession).
  */
@@ -50,6 +55,7 @@ function _render(id, barcode) {
             case 1: _moveTarget = barcode; break
             case 4: _deleteTarget = barcode; break
         }
+        _onBarcodesUpdate(null)
     }
     div.onmouseover = () => {
         if (_moveTarget !== null && _moveTarget !== barcode) {
@@ -63,6 +69,12 @@ function _render(id, barcode) {
             remove(id)
         }
         _deleteTarget = _moveTarget = null
+    }
+
+    if (_moveTarget === barcode) {
+        div.classList.add('move-target')
+    } else if (_deleteTarget === barcode) {
+        div.classList.add('delete-target')
     }
 
     return div
