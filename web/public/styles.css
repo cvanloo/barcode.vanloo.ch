@@ -123,6 +123,7 @@ input[type="text"] {
     align-content: flex-start;
 
     overflow: scroll;
+    padding-top: 45px;
 }
 
 .form-row {
@@ -220,6 +221,9 @@ input[type="text"] {
 }
 
 .move-target {
+    margin-top: -100px;
+    margin-right: -20px;
+
     box-shadow: 50px 50px 4px 5px rgba(0, 0, 0, 0.2);
     z-index: 5;
 }
@@ -227,4 +231,9 @@ input[type="text"] {
 .delete-target {
     box-shadow: 50px 50px 4px 5px rgba(255, 0, 0, 0.2);
     z-index: 5;
+}
+
+.outer-barcode {
+    overflow: visible;
+    margin: auto;
 }
