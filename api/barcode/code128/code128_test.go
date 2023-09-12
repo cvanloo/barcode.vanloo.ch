@@ -19,6 +19,10 @@ func TestDecode(t *testing.T) {
 		{"testfiles/test_code128-6.png", "667390"},
 		{"testfiles/test_code128-7.png", "biz\n"},
 		{"testfiles/test_code128-8.png", "ABCDEFG"},
+
+		// Dirty images
+		{"testfiles/ClearCutGray.png", "hello"},
+		{"testfiles/ClearCutDither.png", "hello"},
 	}
 	code128 := Code128{}
 	for _, c := range cases {

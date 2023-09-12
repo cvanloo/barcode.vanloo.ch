@@ -8,6 +8,13 @@ import (
 	"reflect"
 )
 
+// BarColorTolerance determines which colors count as a bar.
+// The r, g, b color channels (multiplied by a) are summed and normalized
+// between 0 and 1.
+// A pixel is a bar-pixel when the resulting value is less than or equal to
+// BarColorTolerance.
+var BarColorTolerance = 0.7
+
 type Code128 struct{}
 
 func (Code128) Decode(img image.Image) (bs []byte, err error) {
@@ -122,9 +129,7 @@ func modules(img image.Image) (widths []int, err error) {
 	for x := 0; x < img.Bounds().Dx(); x++ {
 		c := img.At(x, 0)
 		r, g, b, _ := c.RGBA()
-		_, _ = g, b
-		// r g b
-		//l := (r + g + b) / ??
+		l := float64(r + g + b) / 0x2FFFD // 0xFFFF * 3 = 0x2FFFD
 
 		if !divFound && len(widths) == 2 {
 			divFound = true
@@ -137,7 +142,7 @@ func modules(img image.Image) (widths []int, err error) {
 			widths[1] = widths[1] / div
 		}
 
-		if r == 0x0000 { // bar
+		if l <= BarColorTolerance { // bar
 			if isBar {
 				run++
 			} else { // new bar run begins; finish space run
@@ -149,7 +154,7 @@ func modules(img image.Image) (widths []int, err error) {
 				isBar = true
 				run = 1
 			}
-		} else if r == 0xFFFF { // space
+		} else { // space
 			if !isBar {
 				run++
 			} else { // new space run begins; finish bar run
