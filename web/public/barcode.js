@@ -5,6 +5,9 @@ let _barcodes = []
 let _moveTarget = null;
 let _deleteTarget = null;
 
+/* fun = (e) => { ... }
+ * e is the function that caused the update (e.g., add, move, remove, or loadSession).
+ */
 function renderFunc(fun) {
     _onBarcodesUpdate = fun
 }
@@ -71,19 +74,19 @@ function _render(id, barcode) {
 function add(barcode) {
     _barcodes.push(barcode)
     localStorage.setObject(sessionStorage.getSession(), _barcodes)
-    _onBarcodesUpdate()
+    _onBarcodesUpdate(add)
 }
 
 function remove(id) {
     _barcodes.splice(id, 1)
     localStorage.setObject(sessionStorage.getSession(), _barcodes)
-    _onBarcodesUpdate()
+    _onBarcodesUpdate(remove)
 }
 
 function move(from, to) {
     _barcodes.splice(to, 0, _barcodes.splice(from, 1)[0])
     localStorage.setObject(sessionStorage.getSession(), _barcodes)
-    _onBarcodesUpdate()
+    _onBarcodesUpdate(move)
 }
 
 //
@@ -117,7 +120,7 @@ function loadSession(session) {
     session = session ?? sessionStorage.newSession()
     sessionStorage.setSession(session)
     _barcodes = localStorage.getObject(session) ?? []
-    _onBarcodesUpdate()
+    _onBarcodesUpdate(loadSession)
 }
 
 export { loadSession, sessionSelect, add, remove, move, renderFunc, renderOnto }

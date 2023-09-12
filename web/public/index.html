@@ -65,9 +65,12 @@
         const scratch_pad = document.getElementById('scratch-pad')
         const form_create = document.getElementById('form-create')
 
-        renderFunc(() => {
+        renderFunc((e) => {
             scratch_pad.textContent = ''
             renderOnto(scratch_pad)
+            if (e === addBarcode) {
+                scratch_pad.scrollTop = scratch_pad.scrollHeight
+            }
         })
 
         form_create.addEventListener('reset', function(e) {
