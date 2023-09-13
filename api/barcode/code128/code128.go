@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"reflect"
 	"image/color"
+	"reflect"
 )
 
-type Code128 struct{
+type Code128 struct {
 	*image.Gray16
 }
 
@@ -19,7 +19,7 @@ func (c Code128) Scale(width, height int) (image.Image, error) {
 		return nil, errors.New("unable to shrink image, new width too small")
 	}
 
-	scaledImage := image.NewGray16(image.Rectangle{image.Point{0,0}, image.Point{width, height}})
+	scaledImage := image.NewGray16(image.Rectangle{image.Point{0, 0}, image.Point{width, height}})
 
 	// TODO: don't generate a quiet zone in Encode. Do this here.
 	//   Never make a quiet zone bigger than necessary, use as much space as
@@ -60,12 +60,12 @@ func Encode(text string) (Code128, error) {
 	//
 	// quiet 10px + start 11px + 11px*len + checksum 11px + stop 13px + quiet 10px = 55px
 	width, height := 11*len(runes)+55, 1
-	img := image.NewGray16(image.Rectangle{image.Point{0,0}, image.Point{width, height}})
+	img := image.NewGray16(image.Rectangle{image.Point{0, 0}, image.Point{width, height}})
 
 	var (
-		xPos int
+		xPos  int
 		table TableIndex
-		cksm *Checksum
+		cksm  *Checksum
 	)
 
 	{ // draw quiet space
@@ -88,7 +88,7 @@ func Encode(text string) (Code128, error) {
 		}
 		bits := Bitpattern[startSym-SpecialOffset]
 		drawBits(img, bits[3:9], &xPos)
-		cksm = NewChecksum(startSym-SpecialOffset)
+		cksm = NewChecksum(startSym - SpecialOffset)
 	}
 
 	{ // draw data symbols
@@ -108,7 +108,7 @@ func Encode(text string) (Code128, error) {
 				}
 				bits := Bitpattern[code-SpecialOffset]
 				drawBits(img, bits[3:9], &xPos)
-				cksm.Add(code-SpecialOffset)
+				cksm.Add(code - SpecialOffset)
 
 				table = nextTable
 			}
@@ -180,7 +180,7 @@ func lookup(r rune, table TableIndex) (bits []int, val int, err error) {
 
 func drawBits(img *image.Gray16, bits []int, startX *int) {
 	for i, w := range bits {
-		if i % 2 == 0 { // draw bar
+		if i%2 == 0 { // draw bar
 			for j := 0; j < w; j++ {
 				img.SetGray16(*startX+j, 0, color.Black)
 			}
@@ -193,9 +193,9 @@ func drawBits(img *image.Gray16, bits []int, startX *int) {
 	}
 }
 
-type Checksum struct{
+type Checksum struct {
 	Value int
-	Idx int
+	Idx   int
 }
 
 func NewChecksum(initial int) *Checksum {
@@ -212,10 +212,6 @@ func (c *Checksum) Sum() int {
 	return c.Value
 }
 
-
-
-
-
 func must[T any](val T, err error) T {
 	if err != nil {
 		panic(err)
@@ -229,10 +225,6 @@ func must2[T1, T2 any](v1 T1, v2 T2, err error) (T1, T2) {
 	}
 	return v1, v2
 }
-
-
-
-
 
 // BarColorTolerance determines which colors count as a bar.
 // The r, g, b color channels (multiplied by a) are summed and normalized
@@ -424,5 +416,3 @@ func segments(widths []int) (quietStart int, startSym []int, data []int, checkSy
 	quietEnd = widths[len(widths)-1]
 	return
 }
-
-

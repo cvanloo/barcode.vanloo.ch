@@ -182,11 +182,12 @@ var Bitpattern = [][]int{
 }
 
 type TableIndex int
+
 const (
 	LookupNone TableIndex = -1
-	LookupA TableIndex = 0
-	LookupB TableIndex = 1
-	LookupC TableIndex = 2
+	LookupA    TableIndex = 0
+	LookupB    TableIndex = 1
+	LookupC    TableIndex = 2
 )
 
 /*

@@ -5,8 +5,8 @@ package main
 import (
 	"fmt"
 	"image"
+	"image/png"   // imported for side-effects
 	_ "image/png" // imported for side-effects
-	"image/png" // imported for side-effects
 	"log"
 	"os"
 
@@ -67,7 +67,7 @@ func main2() {
 		}, /*{
 			Value: "gs1-128",
 			Name:  "GS1-128",
-		}*//*}
+		}*/ /*}
 
 		bs, err := json.Marshal(supported)
 		if err != nil {
