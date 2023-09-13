@@ -176,12 +176,10 @@ func (Code128) Decode(img image.Image) (bs []byte, err error) {
 	}
 
 	checksum := staSym
-	fmt.Printf("CKSM: %d\n", checksum)
 
 	for current < len(d) {
 		sym := decodeTable[d[current-5]][d[current-4]][d[current-3]][d[current-2]][d[current-1]][d[current-0]]
 		checksum += sym * posMul
-		fmt.Printf("CKSM: %d\n", checksum)
 
 		switch sym {
 		default:
@@ -210,8 +208,6 @@ func (Code128) Decode(img image.Image) (bs []byte, err error) {
 		posMul++
 		current += 6
 	}
-
-	fmt.Println(string(bs))
 
 	checksum = checksum % 103
 	cksmVal := decoding.DecodeTableA[c[0]][c[1]][c[2]][c[3]][c[4]][c[5]]
@@ -314,7 +310,6 @@ func (Code128) Encode(bs []byte) (image.Image, error) {
 		bits := encoding.Bitpatterns[startSym-32]
 		drawBits(img, bits[3:9], &xPos)
 		checksum = startSym - 32
-		fmt.Printf("CKSM: %d\n", checksum)
 		ckIdx = 1
 	}
 
@@ -336,7 +331,6 @@ func (Code128) Encode(bs []byte) (image.Image, error) {
 				bits := encoding.Bitpatterns[code-32]
 				drawBits(img, bits[3:9], &xPos)
 				checksum += (code-32) * ckIdx
-				fmt.Printf("CKSM: %d\n", checksum)
 				ckIdx++
 
 				table = nextTable
@@ -345,7 +339,6 @@ func (Code128) Encode(bs []byte) (image.Image, error) {
 			bits, val := must2(lookup(r, table))
 			drawBits(img, bits[3:9], &xPos)
 			checksum += val * ckIdx
-			fmt.Printf("CKSM: %d\n", checksum)
 			ckIdx++
 		}
 	}

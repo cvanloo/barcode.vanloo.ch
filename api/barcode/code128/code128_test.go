@@ -20,11 +20,17 @@ func TestDecode(t *testing.T) {
 		{"testfiles/test_code128-7.png", "biz\n"},
 		{"testfiles/test_code128-8.png", "ABCDEFG"},
 
+		// Rotated
+		{"testfiles/test_code128-rotate.png", "ABCD-1234-abcd"},
+
 		// Dirty images
 		{"testfiles/ClearCutGray.png", "hello"},
 		{"testfiles/ClearCutDither.png", "hello"},
 		{"testfiles/ClearCutBlackAround.png", "hello"},
 		{"testfiles/ClearCutWhiteAround.png", "hello"},
+
+		// Data after stop
+		//{"testfiles/test_code128-data-after-stop.png", "Hello, World!"}, FIXME: failing
 	}
 	code128 := Code128{}
 	for _, c := range cases {
@@ -50,19 +56,28 @@ func TestDecode(t *testing.T) {
 	}
 }
 
-func TestDecodeRightToLeft(t *testing.T) {
-	f, err := os.Open("testfiles/test_code128-rotate.png")
-	if err != nil {
-		t.Fatal(err)
+func TestEncode(t *testing.T) {
+	cases := []string{
+		"Hello, World!",
+		"11223467",
+		"\026\025",
 	}
-	img, _, err := image.Decode(f)
-	if err != nil {
-		t.Fatal(err)
-	}
+
 	code128 := Code128{}
-	bs, err := code128.Decode(img)
-	if err != nil {
-		t.Error(err)
+	for _, c := range cases {
+		img, err := code128.Encode([]byte(c))
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		bs, err := code128.Decode(img)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if string(bs) != c {
+			t.Errorf("got: `%s', want: `%s'", string(bs), c)
+		}
 	}
-	t.Log(string(bs))
+
 }
