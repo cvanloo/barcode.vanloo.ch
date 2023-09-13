@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/cvanloo/barcode"
+	"github.com/cvanloo/barcode/code128"
 )
 
 func must[T any](t T, e error) T {
@@ -21,10 +21,10 @@ func must[T any](t T, e error) T {
 }
 
 func main() {
-	img := must(barcode.Code128.Encode([]byte("Hello, World!")))
+	bc := must(code128.Encode("Hello, World!"))
 	fd := must(os.Create("file-out.png"))
-	grayImg := must(barcode.Scale(img, 312, 80))
-	_ = png.Encode(fd, grayImg)
+	img := must(bc.Scale(312, 80))
+	_ = png.Encode(fd, img)
 	_ = fd.Close()
 }
 
@@ -45,7 +45,7 @@ func main3() {
 	if err != nil {
 		log.Fatalf("decoding image: %v", err)
 	}
-	fmt.Printf("%s\n", string(must(barcode.Code128.Decode(img))))
+	fmt.Printf("%s\n", string(must(code128.Decode(img))))
 }
 
 /*

@@ -1,12 +1,12 @@
 async function supported_types() {
-    const res = await fetch("/api/supported_types", {
+    const res = await fetch("http://localhost:8080/api/supported_types", {
         method: 'GET'
     })
     return res.ok ? (await res.json()) : []
 }
 
 async function request(type, text) {
-    const url = new URL(`${window.location}api/create_barcode`)
+    const url = new URL(`http://localhost:8080/api/create_barcode`)
     url.searchParams.set('type', type)
     url.searchParams.set('text', text)
 

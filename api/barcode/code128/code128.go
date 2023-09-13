@@ -8,9 +8,215 @@ import (
 	"reflect"
 	"image/color"
 
-	"github.com/cvanloo/barcode/code128/encoding"
 	"github.com/cvanloo/barcode/code128/decoding"
 )
+
+type Code128 struct{
+	*image.Gray16
+}
+
+func (c Code128) Scale(width, height int) (image.Image, error) {
+	oldWidth := c.Bounds().Dx()
+	if width < oldWidth {
+		return nil, errors.New("unable to shrink image, new width too small")
+	}
+
+	scaledImage := image.NewGray16(image.Rectangle{image.Point{0,0}, image.Point{width, height}})
+
+	// TODO: don't generate a quiet zone in Encode. Do this here.
+	//   Never make a quiet zone bigger than necessary, use as much space as
+	//   possible for the barcode.
+
+	// scale width
+	scale := width / oldWidth
+	qz := (width % oldWidth) / 2
+	for x := 0; x < qz; x++ { // extend quiet zone start
+		scaledImage.SetGray16(x, 0, color.White)
+	}
+	for x := 0; x < oldWidth; x++ { // copy pixels, scale them
+		for s := 0; s < scale; s++ {
+			scaledImage.SetGray16(qz+s+x*scale, 0, c.Gray16At(x, 0))
+		}
+	}
+	for x := 0; x < qz; x++ { // extend quiet zone end
+		scaledImage.SetGray16(width-x-1, 0, color.White)
+	}
+
+	// scale height
+	for y := 1; y < height; y++ {
+		for x := 0; x < width; x++ {
+			scaledImage.SetGray16(x, y, scaledImage.Gray16At(x, 0))
+		}
+	}
+
+	return scaledImage, nil
+}
+
+func Encode(text string) (Code128, error) {
+	runes := []rune(text)
+
+	// - each symbol is encoded using 6 modules
+	// - a module is 1, 2, 3, or 4 units in size
+	// - the six modules making up a symbol have a total size of 11 units
+	// - we define a unit as 1 pixel
+	//
+	// quiet 10px + start 11px + 11px*len + checksum 11px + stop 13px + quiet 10px = 55px
+	width, height := 11*len(runes)+55, 1
+	img := image.NewGray16(image.Rectangle{image.Point{0,0}, image.Point{width, height}})
+
+	var (
+		xPos int
+		table TableIndex
+		cksm *Checksum
+	)
+
+	{ // draw quiet space
+		for i := 0; i < 10; i++ {
+			img.SetGray16(xPos, 0, color.White)
+			xPos++
+		}
+	}
+
+	{ // draw start symbol
+		table = determineTable(runes, LookupNone)
+		var startSym int
+		switch table {
+		case LookupA:
+			startSym = START_A
+		case LookupB:
+			startSym = START_B
+		case LookupC:
+			startSym = START_C
+		}
+		bits := Bitpattern[startSym-SpecialOffset]
+		drawBits(img, bits[3:9], &xPos)
+		cksm = NewChecksum(startSym-SpecialOffset)
+	}
+
+	{ // draw data symbols
+		for idx, r := range runes {
+			nextTable := determineTable(runes[idx:], table)
+
+			if nextTable != table {
+				// TODO: Shift B/Shift A
+				var code int
+				switch nextTable {
+				case LookupA:
+					code = CODE_A
+				case LookupB:
+					code = CODE_B
+				case LookupC:
+					code = CODE_C
+				}
+				bits := Bitpattern[code-SpecialOffset]
+				drawBits(img, bits[3:9], &xPos)
+				cksm.Add(code-SpecialOffset)
+
+				table = nextTable
+			}
+
+			bits, val := must2(lookup(r, table))
+			drawBits(img, bits[3:9], &xPos)
+			cksm.Add(val)
+		}
+	}
+
+	{ // draw checksum
+		bits := Bitpattern[cksm.Sum()]
+		drawBits(img, bits[3:9], &xPos)
+	}
+
+	{ // draw stop pattern
+		drawBits(img, []int{2, 3, 3, 1, 1, 1, 2}, &xPos)
+	}
+
+	{ // draw quiet space
+		for i := 0; i < 10; i++ {
+			img.SetGray16(xPos, 0, color.White)
+			xPos++
+		}
+	}
+
+	return Code128{img}, nil
+}
+
+func determineTable(nextText []rune, currentTable TableIndex) TableIndex {
+	// ~$ man 7 ascii
+	isAsciiPrintable := func(r rune) bool {
+		return r >= 0x20 /* space */ && r <= 0x7F /* DEL */
+	}
+	isNumber := func(r rune) bool {
+		return r >= 0x30 /* 0 */ && r <= 0x39 /* 9 */
+	}
+	isSpecial := func(r rune) bool {
+		return r >= 0x00 /* NUL */ && r <= 0x1F /* US */
+	}
+
+	// TODO: improve algorithm for more efficient encoding (minimize table switching)
+	//   E.g., Does it make sense to switch to C, or should we just stay in A/B?
+	//   Should we use a Shift B/Shift A or Code B/Code A?
+	if isAsciiPrintable(nextText[0]) {
+		return LookupB
+	}
+	if isNumber(nextText[0]) {
+		if len(nextText) > 1 && isNumber(nextText[1]) {
+			return LookupC
+		}
+		return LookupB
+	}
+	if isSpecial(nextText[0]) {
+		return LookupA
+	}
+
+	panic("unreachable (hopefully)")
+}
+
+func lookup(r rune, table TableIndex) (bits []int, val int, err error) {
+	for i, bits := range Bitpattern {
+		if bits[table] == int(r) {
+			return bits, i, nil
+		}
+	}
+	return nil, -1, fmt.Errorf("invalid rune %U (`%s') in table %s", r, string(r), string(rune(table+0x41)))
+}
+
+func drawBits(img *image.Gray16, bits []int, startX *int) {
+	for i, w := range bits {
+		if i % 2 == 0 { // draw bar
+			for j := 0; j < w; j++ {
+				img.SetGray16(*startX+j, 0, color.Black)
+			}
+		} else { // draw space
+			for j := 0; j < w; j++ {
+				img.SetGray16(*startX+j, 0, color.White)
+			}
+		}
+		*startX += w
+	}
+}
+
+type Checksum struct{
+	Value int
+	Idx int
+}
+
+func NewChecksum(initial int) *Checksum {
+	return &Checksum{Value: initial, Idx: 1}
+}
+
+func (c *Checksum) Add(val int) {
+	c.Value += val * c.Idx
+	c.Idx++
+}
+
+func (c *Checksum) Sum() int {
+	c.Value %= 103
+	return c.Value
+}
+
+
+
+
 
 // BarColorTolerance determines which colors count as a bar.
 // The r, g, b color channels (multiplied by a) are summed and normalized
@@ -18,8 +224,6 @@ import (
 // A pixel is a bar-pixel when the resulting value is less than or equal to
 // BarColorTolerance.
 var BarColorTolerance = 0.7
-
-type Code128 struct{}
 
 func must[T any](val T, err error) T {
 	if err != nil {
@@ -122,7 +326,7 @@ func segments(widths []int) (quietStart int, startSym []int, data []int, checkSy
 	return
 }
 
-func (Code128) Decode(img image.Image) (bs []byte, err error) {
+func Decode(img image.Image) (bs []byte, err error) {
 	widths, err := modules(img)
 	if err != nil {
 		return nil, err
@@ -219,146 +423,3 @@ func (Code128) Decode(img image.Image) (bs []byte, err error) {
 	return bs, nil
 }
 
-func lookup(r rune, table encoding.TableIndex) (bits []int, idx int, err error) {
-	for i, bits := range encoding.Bitpatterns {
-		if bits[table] == int(r) {
-			return bits, i, nil
-		}
-	}
-	return nil, -1, fmt.Errorf("invalid rune %U (`%s') in table %s", r, string(r), string(rune(table+0x41)))
-}
-
-func determineTable(nextText []rune, currentTable encoding.TableIndex) encoding.TableIndex {
-	// ~$ man 7 ascii
-	isAsciiPrintable := func(r rune) bool {
-		return r >= 0x20 /* space */ && r <= 0x7F /* DEL */
-	}
-	isNumber := func(r rune) bool {
-		return r >= 0x30 /* 0 */ && r <= 0x39 /* 9 */
-	}
-	isSpecial := func(r rune) bool {
-		return r >= 0x00 /* NUL */ && r <= 0x1F /* US */
-	}
-
-	// TODO: improve algorithm for more efficient encoding (minimize table switching)
-	//   E.g., Does it make sense to switch to C, or should we just stay in A/B?
-	//   Should we use a Shift B/Shift A or Code B/Code A?
-	if isAsciiPrintable(nextText[0]) {
-		return encoding.LookupB
-	}
-	if isNumber(nextText[0]) {
-		if len(nextText) > 1 && isNumber(nextText[1]) {
-			return encoding.LookupC
-		}
-		return encoding.LookupB
-	}
-	if isSpecial(nextText[0]) {
-		return encoding.LookupA
-	}
-
-	panic("unreachable (hopefully)")
-}
-
-func drawBits(img *image.Gray16, bits []int, startX *int) {
-	for i, w := range bits {
-		if i % 2 == 0 { // draw bar
-			for j := 0; j < w; j++ {
-				img.SetGray16(*startX+j, 0, color.Black)
-			}
-		} else { // draw space
-			for j := 0; j < w; j++ {
-				img.SetGray16(*startX+j, 0, color.White)
-			}
-		}
-		*startX += w
-	}
-}
-
-func (Code128) Encode(bs []byte) (image.Image, error) {
-	text := string(bs)
-
-	// 11*len(bs) -- each symbol encoded with 6 modules, where all 6 modules
-	// together must be 11 units (in our case 1 unit = 1 pixel) wide.
-	//
-	// quietspace(10px) + start(11px) + checksum(11px) + stoppattern(13px) + quietspace(10px) = 55px
-	width, height := 11*len(bs)+55, 1
-	img := image.NewGray16(image.Rectangle{image.Point{0,0}, image.Point{width, height}})
-
-	var (
-		xPos, checksum, ckIdx int
-		table encoding.TableIndex
-	)
-
-	{ // draw quiet space
-		for i := 0; i < 10; i++ {
-			img.SetGray16(xPos, 0, color.White)
-			xPos++
-		}
-	}
-
-	{ // draw start symbol
-		table = determineTable([]rune(text[:]), encoding.LookupUninit)
-		var startSym int
-		switch table {
-		case encoding.LookupA:
-			startSym = encoding.START_A
-		case encoding.LookupB:
-			startSym = encoding.START_B
-		case encoding.LookupC:
-			startSym = encoding.START_C
-		}
-		bits := encoding.Bitpatterns[startSym-32]
-		drawBits(img, bits[3:9], &xPos)
-		checksum = startSym - 32
-		ckIdx = 1
-	}
-
-	{ // draw data symbols
-		for idx, r := range text {
-			nextTable := determineTable([]rune(text[idx:]), table)
-
-			if nextTable != table {
-				// TODO: Shift B/Shift A
-				var code int
-				switch nextTable {
-				case encoding.LookupA:
-					code = encoding.CODE_A
-				case encoding.LookupB:
-					code = encoding.CODE_B
-				case encoding.LookupC:
-					code = encoding.CODE_C
-				}
-				bits := encoding.Bitpatterns[code-32]
-				drawBits(img, bits[3:9], &xPos)
-				checksum += (code-32) * ckIdx
-				ckIdx++
-
-				table = nextTable
-			}
-
-			bits, val := must2(lookup(r, table))
-			drawBits(img, bits[3:9], &xPos)
-			checksum += val * ckIdx
-			ckIdx++
-		}
-	}
-
-	{ // draw checksum
-		checksum %= 103
-		bits := encoding.Bitpatterns[checksum]
-		drawBits(img, bits[3:9], &xPos)
-	}
-
-	{ // draw stop pattern
-		drawBits(img, []int{2, 3, 3, 1, 1, 1, 2}, &xPos)
-	}
-
-	{ // draw quiet space
-		for i := 0; i < 10; i++ {
-			img.SetGray16(xPos, 0, color.White)
-			xPos++
-		}
-	}
-
-	return img, nil
-}

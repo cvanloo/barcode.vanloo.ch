@@ -1,4 +1,4 @@
-package encoding
+package code128
 
 // ASCII special characters
 const (
@@ -38,27 +38,37 @@ const (
 	DEL = 0x7F //      Delete
 )
 
+// SpecialOffset is added to the value of Code-128 special symbols, to offset
+// them from the ASCII table.
+const SpecialOffset = 32
+
 // Code128 special characters
-// The special characters are defined as their value (according to the
-// specification) added to 32 in order to avoid clashing with ASCII values.
-// (ASCII goes up to 127, FNC3 (96) + 32 results in 128).
+// The special characters are offset from the ASCII table by SpecialOffset.
 const (
-	FNC3    = 96 + 32
-	FNC2    = 97 + 32
-	SHIFT   = 98 + 32
-	CODE_C  = 99 + 32
-	CODE_B  = 100 + 32
-	FNC4_B  = 100 + 32
-	CODE_A  = 101 + 32
-	FNC4_A  = 101 + 32
-	FNC1    = 102 + 32
-	START_A = 103 + 32
-	START_B = 104 + 32
-	START_C = 105 + 32
-	STOP    = 106 + 32
+	FNC3    = 96 + SpecialOffset
+	FNC2    = 97 + SpecialOffset
+	SHIFT   = 98 + SpecialOffset
+	CODE_C  = 99 + SpecialOffset
+	CODE_B  = 100 + SpecialOffset
+	FNC4_B  = 100 + SpecialOffset
+	CODE_A  = 101 + SpecialOffset
+	FNC4_A  = 101 + SpecialOffset
+	FNC1    = 102 + SpecialOffset
+	START_A = 103 + SpecialOffset
+	START_B = 104 + SpecialOffset
+	START_C = 105 + SpecialOffset
+	STOP    = 106 + SpecialOffset
 )
 
-var Bitpatterns = [][]int{
+// Bitpattern of the Code-128 symbols
+// A bitpattern is laid out as the array {A, B, C, M1-M6}, where A, B, C
+// designate the symbol according to its corresponding character set, and M1
+// through M6 are the module widths.
+// The index into the array coincides with the symbol's Code-128 value
+// (necessary for calculating the checksum).
+// For special, non-ascii symbols, such as START, CODE, and FNC, the value is
+// offset by 32 from the index, as to not overlap with ASCII.
+var Bitpattern = [][]int{
 	{' ', ' ', 0, 2, 1, 2, 2, 2, 2},
 	{'!', '!', 1, 2, 2, 2, 1, 2, 2},
 	{'"', '"', 2, 2, 2, 2, 2, 2, 1},
@@ -169,7 +179,7 @@ var Bitpatterns = [][]int{
 
 type TableIndex int
 const (
-	LookupUninit TableIndex = -1
+	LookupNone TableIndex = -1
 	LookupA TableIndex = 0
 	LookupB TableIndex = 1
 	LookupC TableIndex = 2
