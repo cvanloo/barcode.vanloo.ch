@@ -1,6 +1,7 @@
 package barcode
 
 import (
+	"image/color"
 	"errors"
 	"fmt"
 	"github.com/cvanloo/barcode/code128"
@@ -31,11 +32,18 @@ func Scale(img image.Image, width, height int) (image.Image, error) {
 
 	// scale width
 	scale := width / oldWidth
+	qz := (width - oldWidth) / 2
 	fmt.Printf("scale: %d\n", scale)
+	for x := 0; x < qz; x++ { // extend quiet zone start
+		scaledImage.SetGray16(x, 0, color.White)
+	}
 	for x := 0; x < oldWidth; x++ {
 		for s := 0; s < scale; s++ {
-			scaledImage.SetGray16(x*scale+s, 0, grayImage.Gray16At(x, 0))
+			scaledImage.SetGray16(qz+s+x*scale, 0, grayImage.Gray16At(x, 0))
 		}
+	}
+	for x := 0; x < qz; x++ { // extend quiet zone end
+		scaledImage.SetGray16(width-x-1, 0, color.White)
 	}
 
 	// scale height
