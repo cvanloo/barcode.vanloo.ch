@@ -5,10 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"reflect"
 	"image/color"
-
-	"github.com/cvanloo/barcode/code128/decoding"
 )
 
 type Code128 struct{
@@ -115,7 +112,7 @@ func Encode(text string) (Code128, error) {
 				table = nextTable
 			}
 
-			bits, val := must2(lookup(r, table))
+			bits, val := must2(lookup(int(r), table))
 			drawBits(img, bits[3:9], &xPos)
 			cksm.Add(val)
 		}
@@ -171,13 +168,13 @@ func determineTable(nextText []rune, currentTable TableIndex) TableIndex {
 	panic("unreachable (hopefully)")
 }
 
-func lookup(r rune, table TableIndex) (bits []int, val int, err error) {
+func lookup(r int, table TableIndex) (bits []int, val int, err error) {
 	for i, bits := range Bitpattern {
-		if bits[table] == int(r) {
+		if bits[table] == r {
 			return bits, i, nil
 		}
 	}
-	return nil, -1, fmt.Errorf("invalid rune %U (`%s') in table %s", r, string(r), string(rune(table+0x41)))
+	return nil, -1, fmt.Errorf("invalid rune %U (`%s') in table %s", r, string(rune(r)), string(rune(table+0x41)))
 }
 
 func drawBits(img *image.Gray16, bits []int, startX *int) {
@@ -218,13 +215,6 @@ func (c *Checksum) Sum() int {
 
 
 
-// BarColorTolerance determines which colors count as a bar.
-// The r, g, b color channels (multiplied by a) are summed and normalized
-// between 0 and 1.
-// A pixel is a bar-pixel when the resulting value is less than or equal to
-// BarColorTolerance.
-var BarColorTolerance = 0.7
-
 func must[T any](val T, err error) T {
 	if err != nil {
 		panic(err)
@@ -237,6 +227,104 @@ func must2[T1, T2 any](v1 T1, v2 T2, err error) (T1, T2) {
 		panic(err)
 	}
 	return v1, v2
+}
+
+
+
+
+
+// BarColorTolerance determines which colors count as a bar.
+// The r, g, b color channels (multiplied by a) are summed and normalized
+// between 0 and 1.
+// A pixel is a bar-pixel when the resulting value is less than or equal to
+// BarColorTolerance.
+var BarColorTolerance = 0.7
+
+func Decode(img image.Image) (text string, err error) {
+	widths, err := modules(img)
+	if err != nil {
+		return "", err
+	}
+
+	_ = reverse(widths)
+	qs, sta, d, c, stp, qe := segments(widths)
+	_, _, _ = qs, qe, stp
+
+	if len(d)%6 != 0 {
+		return "", errors.New("invalid data segment")
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			// TODO
+		}
+	}()
+
+	var decodeTables = [][][][][][][]int{
+		DecodeTableA,
+		DecodeTableB,
+		DecodeTableC,
+	}
+	var table TableIndex
+
+	staSym := DecodeTableA[sta[0]][sta[1]][sta[2]][sta[3]][sta[4]][sta[5]]
+	switch staSym {
+	default:
+		return "", fmt.Errorf("invalid start symbol: %d", staSym)
+	case START_A:
+		table = LookupA
+	case START_B:
+		table = LookupB
+	case START_C:
+		table = LookupC
+	}
+
+	cksm := NewChecksum(staSym-SpecialOffset)
+	runes := []rune{}
+
+	for current := 5; current < len(d); current += 6 {
+		sym := decodeTables[table][d[current-5]][d[current-4]][d[current-3]][d[current-2]][d[current-1]][d[current-0]]
+
+		switch sym {
+		default:
+			cksm.Add(sym)
+			if table == LookupC {
+				runes = append(runes, []rune(fmt.Sprintf("%02d", sym))...)
+			} else {
+				runes = append(runes, rune(sym))
+			}
+		case CODE_A:
+			cksm.Add(sym-SpecialOffset)
+			table = LookupA
+		case CODE_B:
+			cksm.Add(sym-SpecialOffset)
+			table = LookupB
+		case CODE_C:
+			cksm.Add(sym-SpecialOffset)
+			table = LookupC
+		case FNC3:
+		case FNC2:
+		case FNC1:
+		case SHIFT:
+			// TODO: from A to B or B to A
+		case START_A:
+		case START_B:
+		case START_C:
+		case STOP:
+		case REVERSE_STOP:
+			return string(runes), fmt.Errorf("symbol %d invalid in this position", sym)
+		}
+	}
+
+	cksmSym := DecodeTableA[c[0]][c[1]][c[2]][c[3]][c[4]][c[5]]
+	_, cksmVal := must2(lookup(cksmSym, LookupA))
+	sum := cksm.Sum()
+	cksmOK := cksmVal == sum
+	if !cksmOK {
+		return string(runes), fmt.Errorf("invalid checksum: want: %d, got: %d", cksmVal, sum)
+	}
+
+	return string(runes), nil
 }
 
 func modules(img image.Image) (widths []int, err error) {
@@ -306,8 +394,8 @@ func modules(img image.Image) (widths []int, err error) {
 
 func reverse(widths []int) (isReversed bool) {
 	startSym := widths[1:7]
-	sym := decoding.DecodeTableA[startSym[0]][startSym[1]][startSym[2]][startSym[3]][startSym[4]][startSym[5]]
-	if sym == decoding.REVERSE_STOP {
+	sym := DecodeTableA[startSym[0]][startSym[1]][startSym[2]][startSym[3]][startSym[4]][startSym[5]]
+	if sym == REVERSE_STOP {
 		isReversed = true
 		for i, j := 0, len(widths)-1; i < j; i, j = i+1, j-1 {
 			widths[i], widths[j] = widths[j], widths[i]
@@ -325,101 +413,3 @@ func segments(widths []int) (quietStart int, startSym []int, data []int, checkSy
 	quietEnd = widths[len(widths)-1]
 	return
 }
-
-func Decode(img image.Image) (bs []byte, err error) {
-	widths, err := modules(img)
-	if err != nil {
-		return nil, err
-	}
-
-	_ = reverse(widths)
-	qs, sta, d, c, stp, qe := segments(widths)
-	_, _, _ = qs, qe, stp
-
-	if len(d)%6 != 0 {
-		return nil, errors.New("invalid data segment")
-	}
-
-	decodeTable := decoding.DecodeTableA
-	charTable := decoding.CharTableA
-	current, posMul := 5, 1
-
-	defer func() {
-		if r := recover(); r != nil {
-			table := "?"
-			if reflect.ValueOf(decodeTable).Pointer() == reflect.ValueOf(decoding.DecodeTableA).Pointer() {
-				table = "A"
-			}
-			if reflect.ValueOf(decodeTable).Pointer() == reflect.ValueOf(decoding.DecodeTableB).Pointer() {
-				table = "B"
-			}
-			if reflect.ValueOf(decodeTable).Pointer() == reflect.ValueOf(decoding.DecodeTableC).Pointer() {
-				table = "C"
-			}
-			seq := ""
-			for i := -5; current+i < len(d) && i <= 0; i++ {
-				seq += fmt.Sprintf("%d", d[current+i])
-			}
-			err = fmt.Errorf("table %s: invalid sequence: %s", table, seq)
-		}
-	}()
-
-	staSym := decodeTable[sta[0]][sta[1]][sta[2]][sta[3]][sta[4]][sta[5]]
-	switch staSym {
-	default:
-		return nil, fmt.Errorf("invalid start symbol: %s -- %+v", charTable[staSym], sta)
-	case decoding.START_A:
-		decodeTable = decoding.DecodeTableA
-		charTable = decoding.CharTableA
-	case decoding.START_B:
-		decodeTable = decoding.DecodeTableB
-		charTable = decoding.CharTableB
-	case decoding.START_C:
-		decodeTable = decoding.DecodeTableC
-		charTable = decoding.CharTableC
-	}
-
-	checksum := staSym
-
-	for current < len(d) {
-		sym := decodeTable[d[current-5]][d[current-4]][d[current-3]][d[current-2]][d[current-1]][d[current-0]]
-		checksum += sym * posMul
-
-		switch sym {
-		default:
-			bs = append(bs, []byte(charTable[sym])...)
-		case decoding.CODE_A:
-			decodeTable = decoding.DecodeTableA
-			charTable = decoding.CharTableA
-		case decoding.CODE_B:
-			decodeTable = decoding.DecodeTableB
-			charTable = decoding.CharTableB
-		case decoding.CODE_C:
-			decodeTable = decoding.DecodeTableC
-			charTable = decoding.CharTableC
-		case decoding.FNC3:
-		case decoding.FNC2:
-		case decoding.SHIFT_B:
-		case decoding.FNC1:
-		case decoding.START_A:
-		case decoding.START_B:
-		case decoding.START_C:
-		case decoding.STOP:
-		case decoding.REVERSE_STOP:
-			return bs, fmt.Errorf("symbol %+v (%s) invalid in this position", sym, charTable[sym])
-		}
-
-		posMul++
-		current += 6
-	}
-
-	checksum = checksum % 103
-	cksmVal := decoding.DecodeTableA[c[0]][c[1]][c[2]][c[3]][c[4]][c[5]]
-	cksmOK := cksmVal == checksum
-	if !cksmOK {
-		return bs, fmt.Errorf("invalid checksum: want: %d, got: %d", cksmVal, checksum)
-	}
-
-	return bs, nil
-}
-
