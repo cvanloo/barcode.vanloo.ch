@@ -32,7 +32,6 @@ func TestDecode(t *testing.T) {
 		// Data after stop
 		//{"testfiles/test_code128-data-after-stop.png", "Hello, World!"}, FIXME: failing
 	}
-	code128 := Code128{}
 	for _, c := range cases {
 		f, err := os.Open(c.path)
 		if err != nil {
@@ -44,7 +43,7 @@ func TestDecode(t *testing.T) {
 			t.Error(err)
 			continue
 		}
-		bs, err := code128.Decode(img)
+		bs, err := Decode(img)
 		if err != nil {
 			t.Error(err)
 		}
@@ -63,14 +62,13 @@ func TestEncode(t *testing.T) {
 		"\026\025",
 	}
 
-	code128 := Code128{}
 	for _, c := range cases {
-		img, err := code128.Encode([]byte(c))
+		img, err := Encode(c)
 		if err != nil {
 			t.Error(err)
 			continue
 		}
-		bs, err := code128.Decode(img)
+		bs, err := Decode(img)
 		if err != nil {
 			t.Error(err)
 			continue
