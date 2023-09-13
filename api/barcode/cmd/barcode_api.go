@@ -23,7 +23,7 @@ func must[T any](t T, e error) T {
 func main() {
 	img := must(barcode.Code128.Encode([]byte("Hello, World!")))
 	fd := must(os.Create("file-out.png"))
-	grayImg := barcode.Scale(img, 0, 30)
+	grayImg := must(barcode.Scale(img, 312, 80))
 	_ = png.Encode(fd, grayImg)
 	_ = fd.Close()
 }
