@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	_ "image/png" // imported for side-effects
+	"image/png" // imported for side-effects
 	"log"
 	"os"
 
@@ -20,9 +21,18 @@ func must[T any](t T, e error) T {
 }
 
 func main() {
+	img := must(barcode.Code128.Encode([]byte("Hello, World!")))
+	fd := must(os.Create("file-out.png"))
+	grayImg := barcode.Scale(img, 0, 30)
+	_ = png.Encode(fd, grayImg)
+	_ = fd.Close()
+}
+
+func main3() {
 	//f := must(os.Open("code128/test_code128.png"))
 	//f := must(os.Open("code128/test_code128-rotate.png"))
-	f := must(os.Open("/mnt/c/Users/cvanloo/Downloads/Unbenannt.png"))
+	//f := must(os.Open("/mnt/c/Users/cvanloo/Downloads/Unbenannt.png"))
+	f := must(os.Open("file-out.png"))
 	//f := must(os.Open("code128/test_code128-1.png"))
 	//f := must(os.Open("code128/test_code128-2.png"))
 	//f := must(os.Open("code128/test_code128-3.png"))
@@ -38,7 +48,8 @@ func main() {
 	fmt.Printf("%s\n", string(must(barcode.Code128.Decode(img))))
 }
 
-func main() {
+/*
+func main2() {
 	mux := http.NewServeMux()
 
 	enableCORS := func(w http.ResponseWriter) {
@@ -56,7 +67,7 @@ func main() {
 		}, /*{
 			Value: "gs1-128",
 			Name:  "GS1-128",
-		}*/}
+		}*//*}
 
 		bs, err := json.Marshal(supported)
 		if err != nil {
@@ -75,15 +86,15 @@ func main() {
 		text := r.Form.Get("text")
 		fmt.Printf("type: %s, text: %s\n", bc, text)
 
-		bs, err := barcode.Code128.Encode([]byte(text))
+		img, err := barcode.Code128.Encode([]byte(text))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		bs, err := barcode.Scale(bs, 312, 80)
+		img, err := barcode.Scale(img, 312, 80)
 
-		err = png.Encode(w, bs)
+		err = png.Encode(w, img)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -95,3 +106,4 @@ func main() {
 	fmt.Println("Listening and serving on :8080")
 	http.ListenAndServe(":8080", mux)
 }
+*/

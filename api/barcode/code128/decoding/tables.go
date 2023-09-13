@@ -1,4 +1,4 @@
-package code128
+package decoding
 
 const (
 	SPACE, NUM_00             = 0x00, 0x00
@@ -2276,3 +2276,4 @@ var CharTableC = map[int]string{
 	STOP:         "<STOP>",
 	REVERSE_STOP: "<REVERSE_STOP>",
 }
+
