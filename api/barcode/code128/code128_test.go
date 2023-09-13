@@ -60,6 +60,10 @@ func TestEncode(t *testing.T) {
 		"Hello, World!",
 		"11223467",
 		"\026\025",
+		"hello",
+		"112269420",
+		"yoyoyoyo",
+		"439721-hello-WORLD",
 	}
 
 	for _, c := range cases {
