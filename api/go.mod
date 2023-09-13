@@ -1,5 +1,7 @@
-module framagit.org/miya/barcode.vanloo.ch/api
+module github.com/cvanloo/barcode.vanloo.ch/api
 
-go 1.19
+go 1.21
 
-require github.com/boombuler/barcode v1.0.1
+require github.com/cvanloo/barcode v0.1.0
+
+replace github.com/cvanloo/barcode => ./barcode/

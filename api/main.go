@@ -5,39 +5,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"image"
 	"image/png"
-	"log"
+	_ "image/png" // imported for side-effects
 	"net/http"
-	"os"
 
-	"github.com/boombuler/barcode"
-	"github.com/boombuler/barcode/code128"
-
-	c "framagit.org/miya/barcode.vanloo.ch/api/code128"
+	"github.com/cvanloo/barcode/code128"
 )
-
-func main2() {
-	f, err := os.Open("test_code128.png")
-	if err != nil {
-		log.Fatalf("opening test file: %v", err)
-	}
-	img, _, err := image.Decode(f)
-	if err != nil {
-		log.Fatalf("decoding image: %v", err)
-	}
-	fmt.Println(c.Decode(img))
-}
 
 func main() {
 	mux := http.NewServeMux()
 
-	enableCORS := func(w *http.ResponseWriter) {
-		(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	enableCORS := func(w http.ResponseWriter) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 	}
 
 	mux.HandleFunc("/api/supported_types", func(w http.ResponseWriter, r *http.Request) {
-		enableCORS(&w)
+		enableCORS(w)
 
 		supported := []struct {
 			Value, Name string
@@ -59,22 +42,25 @@ func main() {
 	})
 
 	mux.HandleFunc("/api/create_barcode", func(w http.ResponseWriter, r *http.Request) {
-		enableCORS(&w)
+		enableCORS(w)
 
 		r.ParseForm()
 		bc := r.Form.Get("type")
 		text := r.Form.Get("text")
 		fmt.Printf("type: %s, text: %s\n", bc, text)
 
-		b, err := code128.Encode(text)
+		barcode, err := code128.Encode(text)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		bs, err := barcode.Scale(b, 312, 80)
+		img, err := barcode.Scale(312, 80)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 
-		err = png.Encode(w, bs)
+		err = png.Encode(w, img)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
