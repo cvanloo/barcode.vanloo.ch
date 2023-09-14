@@ -3,72 +3,117 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"image/png"
-	_ "image/png" // imported for side-effects
-	"net/http"
+	"syscall/js"
 
 	"github.com/cvanloo/barcode/code128"
 )
 
-func main() {
-	mux := http.NewServeMux()
+func SupportedTypes() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) any {
+		handler := js.FuncOf(func(this js.Value, args []js.Value) any {
+			resolve := args[0]
+			reject := args[1]
 
-	enableCORS := func(w http.ResponseWriter) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+			go func() {
+				resp, err := supportedTypes()
+				if err != nil {
+					jsErr := js.Global().Get("Error")
+					reject.Invoke(jsErr.New(err.Error()))
+				} else {
+					resolve.Invoke(resp)
+				}
+			}()
+
+			return nil
+		})
+
+		promise := js.Global().Get("Promise")
+		return promise.New(handler)
+	})
+}
+
+func supportedTypes() (string, error) {
+	supported := []struct {
+		Value, Name string
+	}{{
+		Value: "code-128",
+		Name:  "Code-128",
+	}, /*{
+		Value: "gs1-128",
+		Name:  "GS1-128",
+	}*/}
+
+	bs, err := json.Marshal(supported)
+	if err != nil {
+		return "", err
 	}
 
-	mux.HandleFunc("/api/supported_types", func(w http.ResponseWriter, r *http.Request) {
-		enableCORS(w)
+	return string(bs), nil
+}
 
-		supported := []struct {
-			Value, Name string
-		}{{
-			Value: "code-128",
-			Name:  "Code-128",
-		}, /*{
-			Value: "gs1-128",
-			Name:  "GS1-128",
-		}*/}
+func CreateBarcode() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) any {
+		typ := args[0].String()
+		text := args[1].String()
+		buf := args[2]
 
-		bs, err := json.Marshal(supported)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+		handler := js.FuncOf(func(this js.Value, args []js.Value) any {
+			resolve := args[0]
+			reject := args[1]
 
-		w.Write(bs)
+			go func() {
+				resp, err := createBarcode(typ, text)
+				if err != nil {
+					jsErr := js.Global().Get("Error")
+					reject.Invoke(jsErr.New(err.Error()))
+				} else {
+					js.CopyBytesToJS(buf, resp)
+					resolve.Invoke(true)
+				}
+			}()
+
+			return nil
+		})
+
+		promise := js.Global().Get("Promise")
+		return promise.New(handler)
 	})
+}
 
-	mux.HandleFunc("/api/create_barcode", func(w http.ResponseWriter, r *http.Request) {
-		enableCORS(w)
+func createBarcode(typ, text string) ([]byte, error) {
+	if typ != "code-128" {
+		return nil, errors.New("barcode type not supported")
+	}
 
-		r.ParseForm()
-		bc := r.Form.Get("type")
-		text := r.Form.Get("text")
-		fmt.Printf("type: %s, text: %s\n", bc, text)
+	bc, err := code128.Encode(text)
+	if err != nil {
+		return nil, err
+	}
 
-		barcode, err := code128.Encode(text)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	img, err := bc.Scale(312, 80)
+	if err != nil {
+		return nil, err
+	}
 
-		img, err := barcode.Scale(312, 80)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
+	buf := bytes.Buffer{}
+	err = png.Encode(&buf, img)
+	if err != nil {
+		return nil, err
+	}
 
-		err = png.Encode(w, img)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	return buf.Bytes(), nil
+}
 
-		w.Header().Set("Content-Type", "image/png")
-	})
+func main() {
+	c := make(chan struct{}, 0)
 
-	fmt.Println("Listening and serving on :8080")
-	http.ListenAndServe(":8080", mux)
+	js.Global().Set("supportedTypes", SupportedTypes())
+	js.Global().Set("createBarcode", CreateBarcode())
+
+	<-c
+	//select {}
 }

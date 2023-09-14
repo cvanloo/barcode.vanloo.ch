@@ -48,6 +48,20 @@
     </div>
 
 
+    <script src="wasm_exec.js"></script>
+    <script>
+        async function loadWasm() {
+            if (WebAssembly) {
+                const go = new Go()
+                fetch("main.wasm")
+                    .then(src => WebAssembly.instantiateStreaming(src, go.importObject))
+                    .then(res => go.run(res.instance))
+                    .catch(console.error)
+            } else {
+                console.log("WebAssembly not supported")
+            }
+        }
+    </script>
     <script type="importmap">
         {
             "imports": {
@@ -61,6 +75,8 @@
         import { loadSession, sessionSelect, add as addBarcode, renderFunc, renderOnto } from 'api/barcode'
         import 'api/storage' // imported for side-effects
         import { supported_types, request as generateBarcode } from 'api/backend'
+
+        await loadWasm()
 
         const scratch_pad = document.getElementById('scratch-pad')
         const form_create = document.getElementById('form-create')
@@ -88,18 +104,13 @@
                 'name': e.target.name.value
             }
 
-            generateBarcode(b.type, b.text)
-                .then(fetch)
-                .then(r => r.blob())
-                .then(blob => {
-                    // TODO: weird, fix this
-                    const fr = new FileReader()
-                    fr.addEventListener('load', function() {
-                        b.url = fr.result
-                        addBarcode(b)
-                        e.target.reset()
-                    })
-                    fr.readAsDataURL(blob)
+            let buf = new Uint8Array(1024*1024*5)
+            createBarcode(b.type, b.text, buf)
+                .then(_ => {
+                    let blob = new Blob([buf], {type: "image/png"})
+                    b.url = URL.createObjectURL(blob)
+                    addBarcode(b)
+                    e.target.reset()
                 })
                 .catch(error => {
                     alert(error)
@@ -107,7 +118,7 @@
         })
 
         const select = document.getElementById('code-select')
-        supported_types().then(types => {
+        supportedTypes().then(types => {
             select.removeChild(select.children[0])
             types.forEach(t => {
                 const opt = document.createElement('option')
