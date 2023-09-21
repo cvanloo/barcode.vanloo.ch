@@ -1,5 +1,13 @@
 # Online Barcode Generator
 
+A simple website to generate barcodes.
+
+- Create many barcodes and list them side by side
+- Barcodes are generated on the client side using WASM
+- Sessions are persisted to local storage
+- Restore previous sessions
+- Drag'n'Drop or delete barcodes
+
 ## Pre Commit
 
 ```sh
