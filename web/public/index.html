@@ -95,11 +95,15 @@
 
             let buf = new Uint8Array(1024*1024*5)
             createBarcode(b.type, b.text, buf)
-                .then(_ => {
-                    let blob = new Blob([buf], {type: "image/png"})
-                    b.url = URL.createObjectURL(blob)
-                    addBarcode(b)
-                    e.target.reset()
+                .then(len => {
+                    let blob = new Blob([buf.subarray(0, len)], {type: "image/png"})
+                    const fr = new FileReader()
+                    fr.addEventListener('load', function() {
+                        b.url = fr.result
+                        addBarcode(b)
+                        e.target.reset()
+                    })
+                    fr.readAsDataURL(blob)
                 })
                 .catch(alert)
         })

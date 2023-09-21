@@ -72,7 +72,7 @@ func CreateBarcode() js.Func {
 					reject.Invoke(jsErr.New(err.Error()))
 				} else {
 					js.CopyBytesToJS(buf, resp)
-					resolve.Invoke(true)
+					resolve.Invoke(len(resp))
 				}
 			}()
 
