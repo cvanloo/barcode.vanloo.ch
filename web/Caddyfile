@@ -1,8 +1,0 @@
-:8000 {
-    root * /srv
-    file_server
-
-    log {
-        output file /var/log/caddy/barcode.vanloo.ch-access.log
-    }
-}
