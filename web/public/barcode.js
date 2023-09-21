@@ -100,7 +100,11 @@ function add(barcode) {
 
 function remove(id) {
     _barcodes.splice(id, 1)
-    localStorage.setObject(sessionStorage.getSession(), _barcodes)
+    if (_barcodes.length > 0) {
+        localStorage.setObject(sessionStorage.getSession(), _barcodes)
+    } else {
+        localStorage.setObject(sessionStorage.getSession(), null)
+    }
     _onBarcodesUpdate(remove)
 }
 
