@@ -53,15 +53,13 @@
         {
             "imports": {
                 "api/barcode": "./barcode.js",
-                "api/storage": "./storage.js",
-                "api/backend": "./backend.js"
+                "api/storage": "./storage.js"
             }
         }
     </script>
     <script type="module">
         import { loadSession, sessionSelect, add as addBarcode, renderFunc, renderOnto } from 'api/barcode'
         import 'api/storage' // imported for side-effects
-        import { supported_types, request as generateBarcode } from 'api/backend'
 
         const go = new Go()
         let res = await WebAssembly.instantiateStreaming(fetch('main.wasm'), go.importObject)
