@@ -20,7 +20,11 @@ git commit --no-verify
 cp barcode.vanloo.ch /etc/nginx/sites-available/
 ln -s /etc/nginx/sites-available/barcode.vanloo.ch /etc/nginx/sites-enabled/
 
-docker-compose up -d --no-deps --build
+cd api/
+make install
+
+sudo cp web/public/* /var/www/html/barcode.vanloo.ch/
+sudo chown www:www /var/www/html/barcode.vanloo.ch/*
 ```
 
 ### SELinux policies
