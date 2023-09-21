@@ -49,19 +49,6 @@
 
 
     <script src="wasm_exec.js"></script>
-    <script>
-        async function loadWasm() {
-            if (WebAssembly) {
-                const go = new Go()
-                fetch("main.wasm")
-                    .then(src => WebAssembly.instantiateStreaming(src, go.importObject))
-                    .then(res => go.run(res.instance))
-                    .catch(console.error)
-            } else {
-                console.log("WebAssembly not supported")
-            }
-        }
-    </script>
     <script type="importmap">
         {
             "imports": {
@@ -76,7 +63,9 @@
         import 'api/storage' // imported for side-effects
         import { supported_types, request as generateBarcode } from 'api/backend'
 
-        await loadWasm()
+        const go = new Go()
+        let res = await WebAssembly.instantiateStreaming(fetch('main.wasm'), go.importObject)
+        go.run(res.instance)
 
         const scratch_pad = document.getElementById('scratch-pad')
         const form_create = document.getElementById('form-create')
@@ -112,21 +101,22 @@
                     addBarcode(b)
                     e.target.reset()
                 })
-                .catch(error => {
-                    alert(error)
-                })
+                .catch(alert)
         })
 
         const select = document.getElementById('code-select')
-        supportedTypes().then(types => {
-            select.removeChild(select.children[0])
-            types.forEach(t => {
-                const opt = document.createElement('option')
-                opt.value = t.Value
-                opt.innerHTML = t.Name
-                select.appendChild(opt)
+        supportedTypes()
+            .then(JSON.parse)
+            .then(types => {
+                select.removeChild(select.children[0])
+                types.forEach(t => {
+                    const opt = document.createElement('option')
+                    opt.value = t.Value
+                    opt.innerHTML = t.Name
+                    select.appendChild(opt)
+                })
             })
-        })
+            .catch(alert)
 
         const session_select = document.getElementById('session-select')
         sessionSelect(session_select)
