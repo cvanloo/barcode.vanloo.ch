@@ -89,7 +89,12 @@ func createBarcode(typ, text string) ([]byte, error) {
 		return nil, errors.New("barcode type not supported")
 	}
 
-	bc, err := code128.Encode(text)
+	cstr, err := code128.NewASCII(text)
+	if err != nil {
+		return nil, err
+	}
+
+	bc, err := code128.Encode(cstr)
 	if err != nil {
 		return nil, err
 	}
