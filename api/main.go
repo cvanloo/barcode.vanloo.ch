@@ -6,11 +6,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"image"
 	"image/png"
+	_ "image/jpeg"
 	"syscall/js"
 
 	"github.com/cvanloo/barcode/code128"
 )
+
+var jsErr = js.Global().Get("Error")
 
 func SupportedTypes() js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
@@ -21,7 +25,6 @@ func SupportedTypes() js.Func {
 			go func() {
 				resp, err := supportedTypes()
 				if err != nil {
-					jsErr := js.Global().Get("Error")
 					reject.Invoke(jsErr.New(err.Error()))
 				} else {
 					resolve.Invoke(resp)
@@ -68,7 +71,6 @@ func CreateBarcode() js.Func {
 			go func() {
 				resp, err := createBarcode(typ, text)
 				if err != nil {
-					jsErr := js.Global().Get("Error")
 					reject.Invoke(jsErr.New(err.Error()))
 				} else {
 					js.CopyBytesToJS(buf, resp)
@@ -113,12 +115,56 @@ func createBarcode(typ, text string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func main() {
-	c := make(chan struct{}, 0)
+func DecodeBarcode() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) any {
+		typ := args[0].String()
+		jsBuf := args[1]
+		size := args[2].Int()
 
+		buf := make([]byte, 5*1024*1024)
+		if n := js.CopyBytesToGo(buf, jsBuf); n != size {
+			return jsErr.New(errors.New("failed to copy memory from JS to Go"))
+		}
+
+		handler := js.FuncOf(func(this js.Value, args []js.Value) any {
+			resolve := args[0]
+			reject := args[1]
+
+			go func() {
+				img, _, err := image.Decode(bytes.NewBuffer(buf[:size]))
+				if err != nil {
+					reject.Invoke(jsErr.New(err.Error()))
+					return
+				}
+				text, err := decodeBarcode(typ, img)
+				if err != nil {
+					reject.Invoke(jsErr.New(err.Error()))
+					return
+				}
+				resolve.Invoke(text)
+			}()
+
+			return nil
+		})
+
+		promise := js.Global().Get("Promise")
+		return promise.New(handler)
+	})
+}
+
+func decodeBarcode(typ string, img image.Image) (text string, err error) {
+	if typ != "code-128" {
+		return "", errors.New("barcode type not supported")
+	}
+
+	bs, _, err := code128.Decode(img)
+	return string(bs), err
+}
+
+func main() {
 	js.Global().Set("supportedTypes", SupportedTypes())
 	js.Global().Set("createBarcode", CreateBarcode())
+	js.Global().Set("decodeBarcode", DecodeBarcode())
 
-	<-c
-	//select {}
+	select{}
 }

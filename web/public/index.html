@@ -43,6 +43,7 @@
             <div id="help-box">
                 <p>Left Click - Drag'n'Drop</p>
                 <p>Middle Click - Delete</p>
+                <p>Decode from Image - Drop a File</p>
             </div>
         </div>
     </div>
@@ -131,6 +132,39 @@
             sessionSelect(session_select)
         })
         loadSession(sessionStorage.getSession())
+
+        scratch_pad.addEventListener('dragover', function(e) {
+            e.preventDefault()
+            e.dataTransfer.dropEffect = 'copy'
+        })
+
+        scratch_pad.addEventListener('drop', function(e) {
+            e.preventDefault()
+            for (let i = 0, file; file = e.dataTransfer.files[i]; ++i) {
+                if (file.type.match(/image.(png|jpeg)/)) {
+                    let reader = new FileReader()
+                    reader.onload = function(e) {
+                        let imageBuf = new Uint8Array(e.target.result)
+                        decodeBarcode('code-128', imageBuf, imageBuf.length)
+                            .then(text => {
+                                reader.onload = function(e) {
+                                    console.log(e.target.result)
+                                    addBarcode({
+                                        type: 'code-128',
+                                        text: text,
+                                        name: '',
+                                        url: e.target.result,
+                                    })
+                                }
+                                reader.readAsDataURL(file)
+                            })
+                            .catch(console.error)
+                    }
+                    reader.readAsArrayBuffer(file)
+                }
+            }
+        })
+
     </script>
 </body>
 
