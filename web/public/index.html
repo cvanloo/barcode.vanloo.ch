@@ -148,7 +148,6 @@
                         decodeBarcode('code-128', imageBuf, imageBuf.length)
                             .then(text => {
                                 reader.onload = function(e) {
-                                    console.log(e.target.result)
                                     addBarcode({
                                         type: 'code-128',
                                         text: text,
