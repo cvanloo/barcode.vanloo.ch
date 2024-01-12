@@ -101,7 +101,7 @@ func createBarcode(typ, text string) ([]byte, error) {
 		return nil, err
 	}
 
-	img, err := bc.Scale(312, 80)
+	img, err := bc.Scale(max(bc.Bounds().Dx(), 312), 80)
 	if err != nil {
 		return nil, err
 	}

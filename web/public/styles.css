@@ -197,7 +197,10 @@ input[type="text"] {
     color: var(--bc-fg-color);
     margin: 0;
     height: 40px;
-    line-height: 40px
+    line-height: 40px;
+    max-width: 312px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #main-container {
