@@ -1,4 +1,3 @@
-barcode.vanloo.ch {
-    root * /srv
-    file_server
-}
+barcode.vanloo.ch
+root * /srv
+file_server
