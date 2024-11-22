@@ -1,8 +1,8 @@
 FROM golang:1.23.3-alpine3.20 AS build
 WORKDIR /usr/src/app
-COPY go.mod go.sum ./
+COPY api/go.mod api/go.sum ./
 RUN go mod download && go mod verify
-COPY api/ .
+COPY api/main.go ./
 RUN GOOS=js GOARCH=wasm go build -v -o main.wasm
 
 FROM caddy:2.9-alpine
