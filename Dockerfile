@@ -9,4 +9,3 @@ FROM caddy:2.9-alpine
 COPY web/public/ /srv
 COPY --from=build /usr/src/app/main.wasm /srv
 COPY Caddyfile /etc/caddy/Caddyfile
-EXPOSE 8080
