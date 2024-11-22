@@ -25,19 +25,66 @@ git commit --no-verify
 ## Setup
 
 ```sh
-cp barcode.vanloo.ch /etc/nginx/sites-available/
-ln -s /etc/nginx/sites-available/barcode.vanloo.ch /etc/nginx/sites-enabled/
+docker build -t docker-barcode .
+docker run -p 8080:80 -i -t docker-barcode:latest
 
-cd api/
-make install
-
-sudo cp web/public/* /var/www/html/barcode.vanloo.ch/
-sudo chown www:www /var/www/html/barcode.vanloo.ch/*
+# test it out
+curl localhost:8080
 ```
 
-### SELinux policies
+### Using Docker Compose
 
-```sh
-sudo grep nginx /var/log/audit/audit.log | grep denied | audit2allow -M nginxlocalconf
-sudo semodule -i nginxlocalconf.pp 
+```yaml
+services:
+    barcode:
+        build: https://github.com/cvanloo/barcode.vanloo.ch.git
+        container_name: barcode
+    caddy:
+        image: caddy:2
+        container_name: caddy
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - /etc/docker/Caddyfile:/etc/caddy/Caddyfile
+            - caddy_data:/data
+            - caddy_config:/config
+volumes:
+    caddy_data:
+    caddy_config:
+```
+
+...where `/etc/docker/Caddyfile` is something like:
+
+```
+barcode.example.com {
+    reverse_proxy http://barcode:80
+}
+```
+
+When setup like this, the reverse proxy handles and terminates TLS.
+
+Run the commands:
+
+```
+docker compose -f config.yml build # build it
+docker compose -f config.yml up -d # start it up
+docker compose -f config.yml down  # tear it down
+```
+
+You might also want to setup a systemd service to automatically start when the server boots:
+
+```
+[Unit]
+Description=Start Docker Services
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+ExecStart=/usr/bin/docker compose -f /etc/docker/config.yml up
+ExecStop=/usr/bin/docker compose -f /etc/docker/config.yml down
+
+[Install]
+WantedBy=default.target
 ```
