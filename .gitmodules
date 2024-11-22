@@ -1,3 +1,0 @@
-[submodule "api/barcode"]
-	path = api/barcode
-	url = git@github.com:cvanloo/barcode.git
